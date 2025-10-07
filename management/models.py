@@ -12,6 +12,7 @@ def generate_token(length=TOKEN_LENGTH):
 
 class AccessToken(models.Model):
     token = models.CharField(max_length=100, default=generate_token, unique=True)
+    password = models.CharField(max_length=100)
     class Role(models.TextChoices):
         STAFF = 'staff', 'Staff'
         DOCTOR = 'doctor', 'Doctor'

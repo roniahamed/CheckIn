@@ -43,4 +43,4 @@ class TokenAuthentication(BaseAuthentication):
     
     def authenticate_header(self, request):
         return self.keyword
-    
+
