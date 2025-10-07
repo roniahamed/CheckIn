@@ -14,7 +14,7 @@ class AccessToken(models.Model):
     token = models.CharField(max_length=100, default=generate_token, unique=True)
     password = models.CharField(max_length=100)
     class Role(models.TextChoices):
-        STAFF = 'staff', 'Staff'
+        STAFF = 'form', 'Form'
         DOCTOR = 'doctor', 'Doctor'
         QUEUE = 'queue', 'Queue'
     role = models.CharField(max_length=20, choices=Role.choices)
