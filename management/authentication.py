@@ -1,7 +1,7 @@
 from rest_framework.authentication import BaseAuthentication
-from rest_framework.exceptions import AuthenticationFailed
-from djangorestframework_simplejwt.authentication import JWTAuthentication
-from djangorestframework_simplejwt.exceptions import InvalidToken, authenticationFailed
+# from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken 
 from django.contrib.auth.models import User
 from management.models import AccessToken
 
