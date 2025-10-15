@@ -1,46 +1,30 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
+from djangorestframework_simplejwt.authentication import JWTAuthentication
+from djangorestframework_simplejwt.exceptions import InvalidToken, authenticationFailed
 from django.contrib.auth.models import User
 from management.models import AccessToken
 
-class Authenticated:
 
-    def __init__(self, token=None):
-        self.token = token 
-    
-    @property
-    def is_authenticated(self):
-        return True 
-    @property
-    def is_anonymous(self):
-        return False
-    
-    @property
-    def pk(self):
-        return self.token.token if self.token else None
-    
+class CustomJWTAuthentication(JWTAuthentication):
 
-class TokenAuthentication(BaseAuthentication):
-    keyword = 'token'
+    def get_header(self, request):
 
-    def authenticate(self, request):
-        auth_header = request.headers.get('Roni-Authorization')
-        if not auth_header:
-            return None 
-        
+        header = request.headers.get('Roni-Authorization')
+        if header is None:
+            return None
+        return header
+    
+    def get_user(self, validated_token):
+
         try:
-            keyword, token = auth_header.split()
-        except ValueError:
-            raise AuthenticationFailed('Invalid token header. No credentials provided.')
-        
-        try:
-            access_token = AccessToken.objects.get(token=token, is_active=True)
+            token_pk = validated_token['token_pk']
+            user = AccessToken.objects.get(pk=token_pk, is_active=True)
+            return user 
         except AccessToken.DoesNotExist:
-            raise AuthenticationFailed('Invalid or inactive token.')
+            raise AuthenticationFailed('User not found or inactive.', code='user_not_found')
+        except KeyError:
+            raise InvalidToken('Token is missing required claims (e.g., token_pk).')
+        
 
-        user = Authenticated(token=access_token)
-        return (user, None)
-    
-    def authenticate_header(self, request):
-        return self.keyword
 
