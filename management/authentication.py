@@ -24,7 +24,7 @@ class TokenAuthentication(BaseAuthentication):
     keyword = 'token'
 
     def authenticate(self, request):
-        auth_header = request.headers.get('Authorization')
+        auth_header = request.headers.get('Roni-Authorization')
         if not auth_header:
             return None 
         
