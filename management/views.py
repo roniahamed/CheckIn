@@ -5,6 +5,13 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken 
 from .permissions import IsFormManager, IsDoctor, IsQueueManager
+from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+from .models import Patient, QueueEntry
+from .serializers import PatientSerializer
+from .tasks import send_patient_checkin_email
 
 
 class LoginView(APIView):
@@ -40,6 +47,36 @@ class LoginView(APIView):
 # View for form patient management
 class FormPatientView(APIView):
     permission_classes = [IsFormManager]
+
+    def post(self, request, *args, **kwargs):
+        serializer = PatientSerializer(data=request.data)
+        if serializer.is_valid():
+            patient = serializer.save()
+
+            QueueEntry.objects.create(patient=patient)
+
+            channel_layer = get_channel_layer()
+
+            async_to_sync(channel_layer.group_send)(
+                'queue_group',
+                {
+                    'type': 'send.queue.update',
+                    'event': 'PATIENT_ADDED',
+                    'patient': {
+                        'id': patient.id,
+                        'name':patient.fname,
+                        'status': 'WAITING',
+
+                    }
+                }
+            )
+            send_patient_checkin_email.delay(patient.id)
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
     def get(self, request):
         # Logic for form patient management
