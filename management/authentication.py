@@ -1,5 +1,5 @@
 from rest_framework.authentication import BaseAuthentication
-# from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken 
 from django.contrib.auth.models import User
@@ -12,8 +12,9 @@ class CustomJWTAuthentication(JWTAuthentication):
 
         header = request.headers.get('Roni-Authorization')
         if header is None:
+            print("Header is None")
             return None
-        return header
+        return header.encode('utf-8')
     
     def get_user(self, validated_token):
 
