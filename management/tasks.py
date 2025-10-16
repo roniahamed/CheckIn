@@ -15,29 +15,39 @@ def send_patient_checkin_email(patient_id):
         'Full Name': patient.fname,
         'Date of Birth': patient.dob,
         'Gender': patient.gender,
+        'Pronoun': patient.pronoun,
         'Phone': patient.phone,
+        'Emergency Contact': patient.emergency_contact,
         'SSN': patient.ssn,
-        'Address': f"{patient.street1}, {patient.city}, {patient.state} {patient.zip}",
+        'Address': f"{patient.street1 or ''} {patient.street2 or ''}, {patient.city or ''}, {patient.state or ''} {patient.zip or ''}",
+        'Last Known Address': patient.last_known_address,
         'Medicaid No': patient.medicaid_no,
+        'ID Card': patient.id_card,
         'Insurance': patient.insurance,
         'Race': patient.race,
-        
+        'Preferred Service': patient.pref_service,
+        'Preferred Service Area': patient.pref_service_area,
+        'Employed': patient.employed,
+        'Shower': patient.shower,
+        'Hungry': patient.hungry,
+        'Homeless': patient.homeless,
+        'Image': patient.image.url if patient.image else None,
+        'Created At': patient.created_at,
+        'Updated At': patient.updated_at,
     }
     
-    # একটি HTML টেমপ্লেট ব্যবহার করে ইমেইলের বডি তৈরি করুন
-    # এটি সাধারণ টেক্সটের চেয়ে অনেক বেশি প্রফেশনাল দেখাবে
     html_message = render_to_string('emails/patient_details.html', {'patient': patient_data})
     
     subject = f"New Patient Check-in: {patient.fname}"
-    message = f"A new patient has checked in. Details are attached." # Plain text fallback
+    message = f"A new patient has checked in. Details are attached." 
     from_email = 'your_email@gmail.com'
-    recipient_list = ['admin_email@example.com'] # অ্যাডমিনের ইমেইল
+    recipient_list = ['admin_email@example.com'] 
 
     send_mail(
         subject,
         message,
         from_email,
         recipient_list,
-        html_message=html_message # HTML কন্টেন্ট যোগ করুন
+        html_message=html_message 
     )
     return f"Detailed email sent for patient {patient.fname}"
