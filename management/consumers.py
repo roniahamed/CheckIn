@@ -22,8 +22,5 @@ class QueueConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
     
-    async def queue_update(self, event):
-        await self.send(text_data=json.dumps({
-            'type':event['type'],
-            'patient':event['patient'],
-        }))
+    async def send_queue_update(self, event):
+        await self.send(text_data=json.dumps(event))
