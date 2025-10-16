@@ -25,7 +25,7 @@ class LoginView(APIView):
         
         refresh = RefreshToken()
 
-        refresh['token_pk'] = access_token.token
+        refresh['token_pk'] = access_token.pk
         refresh['role'] = access_token.role
 
         data = {
