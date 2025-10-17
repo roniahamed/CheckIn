@@ -105,11 +105,11 @@ class DoctorPatientView(APIView):
                 return Response({'error': "Could not process the request. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         elif action == 'complete':
             try:
-                entry = QueueEntry.objects.select_related('patient').get(patient_id=patient_id, status=QueueEntry.Status.in_consultation)
+                entry = QueueEntry.objects.select_related('patient').get(patient_id=patient_id, status=QueueEntry.Status.IN_CONSULTATION)
             except QueueEntry.DoesNotExist:
                 return Response({'error': 'Patient is not currently in progress.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            entry.status = QueueEntry.Status.completed
+            entry.status = QueueEntry.Status.COMPLETED
             entry.check_out_time = timezone.now()
             entry.save()
 
@@ -144,7 +144,7 @@ class QueueManagementView(APIView):
     # permission_classes = [IsQueueManager]
 
     def get(self, request):
-        queue_entries = QueueEntry.objects.select_related('patient').exclude(status=QueueEntry.Status.completed)
+        queue_entries = QueueEntry.objects.select_related('patient').exclude(status=QueueEntry.Status.COMPLETED)
 
         data = [
             {
