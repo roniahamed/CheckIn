@@ -52,8 +52,10 @@ class FormPatientView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = PatientSerializer(data=request.data)
         if serializer.is_valid():
+            # Use select_related for related objects if PatientSerializer creates related objects
             patient = serializer.save()
 
+            # No related objects to select here, but if you query for patient later, use select_related
             QueueEntry.objects.create(patient=patient)
 
             channel_layer = get_channel_layer()
@@ -65,16 +67,14 @@ class FormPatientView(APIView):
                     'event': 'PATIENT_ADDED',
                     'patient': {
                         'id': patient.id,
-                        'name':patient.fname,
+                        'name': patient.fname,
                         'status': 'waiting',
-
                     }
                 }
             )
             send_patient_checkin_email.delay(patient.id)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def get(self, request):
         # Logic for form patient management
@@ -89,27 +89,26 @@ class DoctorPatientView(APIView):
         patient_id = request.data.get('patient_id')
 
         if action == 'call_next':
-
             try:
                 with transaction.atomic():
-                    entry = QueueEntry.objects.select_for_update().filter(status='waiting').first()
+                    entry = QueueEntry.objects.select_for_update().select_related('patient').filter(status='waiting').first()
                     if not entry:
                         return Response({'error': 'No patients in the waiting.'}, status=status.HTTP_404_NOT_FOUND)
-            
-                        entry.status = 'in_consultation'
-                        entry.called_at = timezone.now()
-                        entry.save()
 
-                        patient_data = { 'id': entry.patient.id, 'name': entry.patient.fname, 'status': 'IN_PROGRESS' }
-                        event_type = 'PATIENT_CALLED'
+                    entry.status = 'in_consultation'
+                    entry.called_at = timezone.now()
+                    entry.save()
+
+                    patient_data = { 'id': entry.patient.id, 'name': entry.patient.fname, 'status': 'IN_PROGRESS' }
+                    event_type = 'PATIENT_CALLED'
             except Exception as e:
                 return Response({'error': "Could not process the request. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         elif action == 'complete':
             try:
-                entry = QueueEntry.objects.get(patient_id=patient_id, status=QueueEntry.Status.IN_PROGRESS)
+                entry = QueueEntry.objects.select_related('patient').get(patient_id=patient_id, status=QueueEntry.Status.IN_PROGRESS)
             except QueueEntry.DoesNotExist:
                 return Response({'error': 'Patient is not currently in progress.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             entry.status = QueueEntry.Status.completed
             entry.check_out_time = timezone.now()
             entry.save()
