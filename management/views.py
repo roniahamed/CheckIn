@@ -8,6 +8,7 @@ from .permissions import IsFormManager, IsDoctor, IsQueueManager
 from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import transaction
 
 from .models import Patient, QueueEntry
 from .serializers import PatientSerializer
@@ -65,19 +66,16 @@ class FormPatientView(APIView):
                     'patient': {
                         'id': patient.id,
                         'name':patient.fname,
-                        'status': 'WAITING',
+                        'status': 'waiting',
 
                     }
                 }
             )
             send_patient_checkin_email.delay(patient.id)
-            
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
     def get(self, request):
         # Logic for form patient management
         return Response({'message': f'Welcome Form User (Token: {request.user.token})! You can access the patient form.'})
@@ -85,6 +83,58 @@ class FormPatientView(APIView):
 # View for doctor patient management
 class DoctorPatientView(APIView):
     permission_classes = [IsDoctor]
+
+    def post(self, request, *args, **kwargs):
+        action = request.data.get('action')
+        patient_id = request.data.get('patient_id')
+
+        if action == 'call_next':
+
+            try:
+                with transaction.atomic():
+                    entry = QueueEntry.objects.select_for_update().filter(status='waiting').first()
+                    if not entry:
+                        return Response({'error': 'No patients in the waiting.'}, status=status.HTTP_404_NOT_FOUND)
+            
+                        entry.status = 'in_consultation'
+                        entry.called_at = timezone.now()
+                        entry.save()
+
+                        patient_data = { 'id': entry.patient.id, 'name': entry.patient.fname, 'status': 'IN_PROGRESS' }
+                        event_type = 'PATIENT_CALLED'
+            except Exception as e:
+                return Response({'error': "Could not process the request. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        elif action == 'complete':
+            try:
+                entry = QueueEntry.objects.get(patient_id=patient_id, status=QueueEntry.Status.IN_PROGRESS)
+            except QueueEntry.DoesNotExist:
+                return Response({'error': 'Patient is not currently in progress.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            entry.status = QueueEntry.Status.completed
+            entry.check_out_time = timezone.now()
+            entry.save()
+
+            patient = entry.patient
+            wait_time = entry.check_out_time - entry.check_in_time
+            patient.wait_time = wait_time
+            patient.save()
+
+            patient_data = { 'id': patient.id, 'name': patient.fname, 'status': 'COMPLETED' }
+            event_type = 'PATIENT_COMPLETED'
+        else:
+            return Response({'error': 'Invalid action or missing patient.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            'queue_group',
+            {
+                'type': 'send.queue.update',
+                'event': event_type,
+                'patient': patient_data
+            }
+        )
+
+        return Response({'message': 'Action successful.', 'patient': patient_data})
 
     def get(self, request):
         # Logic for doctor patient management
