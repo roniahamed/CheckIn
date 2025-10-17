@@ -114,12 +114,12 @@ class Patient(models.Model):
 
 class QueueEntry(models.Model):
     class Status(models.TextChoices):
-        waiting = 'waiting', 'Waiting'
-        in_consultation = 'in_consultation', 'In Progress'
-        completed = 'completed', 'Completed'
+        WAITING = 'waiting', 'Waiting'
+        IN_CONSULTATION = 'in_consultation', 'In Consultation'
+        COMPLETED = 'completed', 'Completed'
 
     patient = models.OneToOneField(Patient, on_delete=models.CASCADE, related_name='queue_entry')
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.waiting)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.WAITING)
     check_in_time = models.DateTimeField(default=timezone.now)
     called_at = models.DateTimeField(null=True, blank=True)
     check_out_time = models.DateTimeField(null=True, blank=True)
