@@ -141,7 +141,7 @@ class DoctorPatientView(APIView):
 
 # View for queue management
 class QueueManagementView(APIView):
-    permission_classes = [IsQueueManager]
+    # permission_classes = [IsQueueManager]
 
     def get(self, request):
         queue_entries = QueueEntry.objects.select_related('patient').exclude(status=QueueEntry.Status.completed)
@@ -153,6 +153,6 @@ class QueueManagementView(APIView):
                 'status': entry.status,
                 'check_in_time': entry.check_in_time,
             }
-            for entry in queue_entries
+            for entry in queue_entries  
         ]
-        return Response({'message': f'Welcome Queue Manager (Token: {request.user.token})! You can access the queue management.'})
+        return Response(data)
