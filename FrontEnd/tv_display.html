@@ -1,0 +1,93 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting Queue Display</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 0; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; height: 100vh; }
+        .panel { padding: 4rem; }
+        .serving-panel { background-color: #161b22; border-right: 1px solid #30363d; text-align: center; }
+        .waiting-panel { background-color: #0d1117; }
+        h1 { font-size: 4rem; text-transform: uppercase; color: #58a6ff; margin-bottom: 2rem; }
+        .now-serving-text { font-size: 7rem; font-weight: bold; color: #7ee787; line-height: 1.2; }
+        .waiting-list { list-style: none; padding: 0; font-size: 3rem; }
+        .waiting-list li { padding: 1rem; border-bottom: 1px solid #30363d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel serving-panel">
+        <h1>Now Serving</h1>
+        <div id="now-serving" class="now-serving-text">-</div>
+    </div>
+    <div class="panel waiting-panel">
+        <h1>Waiting</h1>
+        <ul id="waiting-list" class="waiting-list">
+            <!-- Waiting patients appear here -->
+        </ul>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://127.0.0.1:9000/api';
+    const WS_URL = 'ws://127.0.0.1:9000/ws/queue/'; // WebSocket URL
+
+    const nowServingEl = document.getElementById('now-serving');
+    const waitingListEl = document.getElementById('waiting-list');
+    
+    function updateDisplay(queue) {
+        waitingListEl.innerHTML = '';
+        nowServingEl.textContent = '-';
+
+        const inProgressPatient = queue.find(p => p.status === 'IN_PROGRESS');
+        if (inProgressPatient) {
+            nowServingEl.textContent = inProgressPatient.name;
+        }
+        
+        queue.filter(p => p.status === 'WAITING').forEach(p => {
+            const li = document.createElement('li');
+            li.id = `patient-${p.id}`;
+            li.textContent = p.name;
+            waitingListEl.appendChild(li);
+        });
+    }
+
+    async function fetchInitialQueue() {
+        try {
+            // UPDATED URL
+            const response = await fetch(`${API_BASE_URL}/queue/`);
+            const queue = await response.json();
+            updateDisplay(queue);
+        } catch (error) {
+            console.error('Failed to fetch initial queue:', error);
+        }
+    }
+
+    function setupWebSocket() {
+        // UPDATED WebSocket URL
+        const socket = new WebSocket(WS_URL);
+
+        socket.onmessage = (e) => {
+            fetchInitialQueue();
+        };
+
+        socket.onclose = (e) => {
+            console.error('Socket closed. Reconnecting in 3 seconds...');
+            setTimeout(setupWebSocket, 3000);
+        };
+
+        socket.onerror = (err) => {
+            console.error('WebSocket error:', err.message);
+            socket.close();
+        };
+    }
+
+    fetchInitialQueue();
+    setupWebSocket();
+</script>
+</body>
+</html>
