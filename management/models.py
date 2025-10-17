@@ -33,7 +33,11 @@ class Patient(models.Model):
     # Personal Information
     fname = models.CharField(max_length=255, blank=True, null=True) # Full Name
     dob = models.DateField(blank=True, null=True) # Date of Birth
-    gender = models.CharField(max_length=50, blank=True, null=True)
+    gender = models.CharField(max_length=50, blank=True, null=True, choices=[
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+    ])
     pronoun = models.CharField(max_length=50, blank=True, null=True, choices=[
         ('he/him', 'He/Him'),
         ('she/her', 'She/Her'),])
@@ -93,11 +97,11 @@ class Patient(models.Model):
     pref_service_area = models.CharField(max_length=255, blank=True, null=True)
     
     # Status
-    employed = models.BooleanField(default=False, choices=[('yes', 'Yes'), ('no', 'No'), ('disabled','Disabled')], help_text='Are you employed?')
-    shower = models.BooleanField(default=False, choices=[('yes', 'Yes'), ('no', 'No')], help_text='Do you need a shower?', blank=True, null=True)
-    hungry = models.BooleanField(default=False, choices=[('yes', 'Yes'), ('no', 'No')], help_text='Are you hungry?')
-    homeless = models.BooleanField(default=False, choices=[('yes', 'Yes'), ('no', 'No'), ('staying/someone', 'Staying / Someone')], help_text='Are you homeless?', blank=True, null=True)
-    
+    employed = models.CharField( max_length=100, default='NO', choices=[('yes', 'Yes'), ('no', 'No'), ('disabled','Disabled')], help_text='Are you employed?', blank=True, null=True)
+    shower = models.CharField(default='No', max_length=100, choices=[('yes', 'Yes'), ('no', 'No')], help_text='Do you need a shower?', blank=True, null=True)
+    hungry = models.CharField(default='No', max_length=100, choices=[('yes', 'Yes'), ('no', 'No')], help_text='Are you hungry?', blank=True, null=True)
+    homeless = models.CharField(default='Yes', max_length=100, choices=[('yes', 'Yes'), ('no', 'No'), ('staying/someone', 'Staying / Someone')], help_text='Are you homeless?', blank=True, null=True)
+
     # System Fields
     image = models.ImageField(upload_to='patient_images/', blank=True, null=True)
     wait_time = models.DurationField(null=True, blank=True)
