@@ -99,13 +99,13 @@ class DoctorPatientView(APIView):
                     entry.called_at = timezone.now()
                     entry.save()
 
-                    patient_data = { 'id': entry.patient.id, 'name': entry.patient.fname, 'status': 'IN_PROGRESS' }
+                    patient_data = { 'id': entry.patient.id, 'name': entry.patient.fname, 'status': 'in_consultation' }
                     event_type = 'PATIENT_CALLED'
             except Exception as e:
                 return Response({'error': "Could not process the request. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         elif action == 'complete':
             try:
-                entry = QueueEntry.objects.select_related('patient').get(patient_id=patient_id, status=QueueEntry.Status.IN_PROGRESS)
+                entry = QueueEntry.objects.select_related('patient').get(patient_id=patient_id, status=QueueEntry.Status.in_consultation)
             except QueueEntry.DoesNotExist:
                 return Response({'error': 'Patient is not currently in progress.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -118,7 +118,7 @@ class DoctorPatientView(APIView):
             patient.wait_time = wait_time
             patient.save()
 
-            patient_data = { 'id': patient.id, 'name': patient.fname, 'status': 'COMPLETED' }
+            patient_data = { 'id': patient.id, 'name': patient.fname, 'status': 'completed' }
             event_type = 'PATIENT_COMPLETED'
         else:
             return Response({'error': 'Invalid action or missing patient.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -136,7 +136,6 @@ class DoctorPatientView(APIView):
         return Response({'message': 'Action successful.', 'patient': patient_data})
 
     def get(self, request):
-        # Logic for doctor patient management
         return Response({'message': f'Welcome Doctor (Token: {request.user.token})! You can access the doctor patient management.'})
 
 
@@ -145,5 +144,4 @@ class QueueManagementView(APIView):
     permission_classes = [IsQueueManager]
 
     def get(self, request):
-        # Logic for queue management
         return Response({'message': f'Welcome Queue Manager (Token: {request.user.token})! You can access the queue management.'})
