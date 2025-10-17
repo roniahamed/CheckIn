@@ -144,4 +144,15 @@ class QueueManagementView(APIView):
     permission_classes = [IsQueueManager]
 
     def get(self, request):
+        queue_entries = QueueEntry.objects.select_related('patient').exclude(status=QueueEntry.Status.completed)
+
+        data = [
+            {
+                'id': entry.patient.id,
+                'name': entry.patient.fname,
+                'status': entry.status,
+                'check_in_time': entry.check_in_time,
+            }
+            for entry in queue_entries
+        ]
         return Response({'message': f'Welcome Queue Manager (Token: {request.user.token})! You can access the queue management.'})
