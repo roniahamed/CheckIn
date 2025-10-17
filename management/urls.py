@@ -5,6 +5,6 @@ from .views import FormPatientView, DoctorPatientView, QueueManagementView, Logi
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('patients/', FormPatientView.as_view(), name='patient-list'),
-    path('doctors/', DoctorPatientView.as_view(), name='doctor-list'),
+    path('doctors/', DoctorPatientView.as_view(), name='queue-management'),
     path('queue/', QueueManagementView.as_view(), name='queue-list'),
 ]   
