@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CRC Intake System</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; color: #555; }
+        input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 0.75rem; border: none; background-color: #5c67f2; color: white; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+        button:hover { background-color: #4a54c4; }
+        #error-message { color: red; text-align: center; margin-top: 1rem; }
+        .nav-links { text-align: center; margin-top: 1.5rem; }
+        .nav-links a { margin: 0 10px; color: #5c67f2; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>CRC Intake System Login</h2>
+    <form id="login-form">
+        <div class="form-group">
+            <label for="token">Token</label>
+            <input type="text" id="token" name="token" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+    <div id="error-message"></div>
+    <div class="nav-links">
+        <p>After login, please navigate to your dashboard:</p>
+        <a href="staff_form.html">Staff Form</a> | 
+        <a href="doctor_dashboard.html">Doctor Dashboard</a>
+    </div>
+</div>
+
+<script>
+    const loginForm = document.getElementById('login-form');
+    const errorMessage = document.getElementById('error-message');
+    const API_BASE_URL = 'http://127.0.0.1:9000/api';
+
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        errorMessage.textContent = '';
+
+        const token = document.getElementById('token').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/login/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, password })
+            });
+
+            // Log status for Network tab debugging
+            console.log('API Response Status:', response.status, response.statusText);
+
+            // Try to parse JSON safely
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (parseErr) {
+                console.warn('Response JSON parse failed:', parseErr);
+            }
+
+            if (!response.ok) {
+                const serverMsg = data && (data.detail || data.error || data.message) ? (data.detail || data.error || data.message) : null;
+                const msg = serverMsg || `Server returned ${response.status} ${response.statusText}`;
+                throw new Error(msg);
+            }
+
+            if (!data || !data.access) {
+                throw new Error('No access token returned by API.');
+            }
+
+            localStorage.setItem('accessToken', data.access);
+            alert('Login successful! Please go to your designated page.');
+
+        } catch (error) {
+            // More detailed client-side diagnostics
+            console.error('Fetch Error:', error);
+
+            // If the fetch itself failed (network-level), error.name may be 'TypeError' and message may be 'Failed to fetch'
+            if (error.message && error.message.includes('Failed to fetch')) {
+                errorMessage.textContent = 'Network error: failed to reach the API. Possible causes: ad-blocker/browser extension blocking the request, CORS policy, or server not reachable. Check browser console and Network tab.';
+            } else {
+                errorMessage.textContent = `Error: ${error.message}`;
+            }
+
+            // Extra hint for common blocker
+            const hint = document.createElement('div');
+            hint.style.marginTop = '8px';
+            hint.style.fontSize = '0.9rem';
+            hint.style.color = '#666';
+            hint.textContent = "If you're using an ad-blocker or privacy extension, try disabling it for this page. Also check CORS settings on the API server.";
+            errorMessage.appendChild(hint);
+        }
+    });
+</script>
+
+
+</body>
+</html>
