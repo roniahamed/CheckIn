@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; }
+        .dashboard-container { display: flex; gap: 2rem; padding: 2rem; }
+        .queue-section, .controls-section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .queue-section { flex-grow: 1; }
+        .controls-section { min-width: 300px; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 0.5rem; margin-top: 0; }
+        #waiting-list { list-style: none; padding: 0; }
+        #waiting-list li { padding: 0.75rem; border-bottom: 1px solid #eee; }
+        #now-serving { font-size: 1.5rem; font-weight: bold; color: #007bff; margin-bottom: 1.5rem; }
+        button { display: block; width: 100%; padding: 1rem; border: none; border-radius: 5px; color: white; font-size: 1.1rem; cursor: pointer; margin-bottom: 1rem; }
+        #call-next-btn { background-color: #007bff; }
+        #complete-btn { background-color: #28a745; }
+        #logout-btn { background-color: #dc3545; font-size: 0.9rem; padding: 0.5rem 1rem;}
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Doctor's Dashboard</h1>
+    <button id="logout-btn">Logout</button>
+</div>
+
+<div class="dashboard-container">
+    <div class="controls-section">
+        <h2>Now Serving</h2>
+        <div id="now-serving">-</div>
+        <h2>Controls</h2>
+        <button id="call-next-btn">Call Next Patient</button>
+        <button id="complete-btn" disabled>Mark as Completed</button>
+    </div>
+    <div class="queue-section">
+        <h2>Waiting Queue</h2>
+        <ul id="waiting-list">
+            <!-- Waiting patients will appear here -->
+        </ul>
+    </div>
+</div>
+<script>
+    // Authentication Check
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        window.location.href = 'login.html';
+    }
+
+    const API_BASE_URL = 'http://127.0.0.1:9000/api';
+    const WS_URL = 'ws://127.0.0.1:9000/ws/queue/'; // WebSocket URL
+
+    const waitingListEl = document.getElementById('waiting-list');
+    const nowServingEl = document.getElementById('now-serving');
+    const callNextBtn = document.getElementById('call-next-btn');
+    const completeBtn = document.getElementById('complete-btn');
+    let currentPatientId = null;
+
+    // --- API Functions ---
+    async function apiCall(endpoint, method = 'GET', body = null) {
+        const fullUrl = API_BASE_URL + endpoint;
+        const headers = { 'Roni-Authorization': `Bearer ${accessToken}` };
+        if (body) {
+            headers['Content-Type'] = 'application/json';
+        }
+        const response = await fetch(fullUrl, {
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : null
+        });
+        if (!response.ok) throw new Error(`API call failed: ${response.statusText}`);
+        return response.json();
+    }
+
+    // --- UI Update Functions (no changes) ---
+    function updateUI(queue) {
+        waitingListEl.innerHTML = '';
+        nowServingEl.textContent = '-';
+        currentPatientId = null;
+        completeBtn.disabled = true;
+
+        queue.forEach(p => {
+            if (p.status === 'WAITING') {
+                const li = document.createElement('li');
+                li.id = `patient-${p.id}`;
+                li.textContent = p.name;
+                waitingListEl.appendChild(li);
+            } else if (p.status === 'IN_PROGRESS') {
+                nowServingEl.textContent = p.name;
+                currentPatientId = p.id;
+                completeBtn.disabled = false;
+            }
+        });
+        callNextBtn.disabled = !queue.some(p => p.status === 'WAITING');
+    }
+    
+    // --- Event Listeners ---
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('accessToken');
+        window.location.href = 'login.html';
+    });
+
+    // UPDATED endpoint paths
+    callNextBtn.addEventListener('click', () => apiCall('/doctors/', 'POST', { action: 'call_next' }));
+    completeBtn.addEventListener('click', () => {
+        if(currentPatientId) {
+            apiCall('/doctors/', 'POST', { action: 'mark_completed', patient_id: currentPatientId })
+        }
+    });
+
+    // --- WebSocket Logic ---
+    function setupWebSocket() {
+        // UPDATED WebSocket URL
+        const socket = new WebSocket(WS_URL);
+
+        socket.onmessage = (e) => {
+            console.log('Socket message received:', JSON.parse(e.data));
+            loadInitialQueue();
+        };
+
+        socket.onclose = (e) => {
+            console.error('WebSocket closed. Reconnecting...');
+            setTimeout(setupWebSocket, 3000);
+        };
+        
+        socket.onerror = (err) => {
+            console.error('WebSocket error:', err);
+            socket.close();
+        };
+    }
+
+    // --- Initial Load ---
+    async function loadInitialQueue() {
+        try {
+            // UPDATED endpoint path
+            const queue = await apiCall('/queue/');
+            updateUI(queue);
+        } catch (error) {
+            console.error("Failed to load queue:", error);
+        }
+    }
+
+    loadInitialQueue();
+    setupWebSocket();
+</script>
+
+</body>
+</html>
