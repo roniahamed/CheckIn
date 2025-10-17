@@ -109,7 +109,7 @@ class Patient(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.fname
+        return self.fname or "Unnamed Patient"
 
 
 class QueueEntry(models.Model):
