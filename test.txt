@@ -1,0 +1,5 @@
+celery -A CheckIn worker -l info
+
+daphne CheckIn.asgi:application
+
+python -m http.server 8001

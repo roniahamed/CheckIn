@@ -43,7 +43,7 @@ class PatientAdmin(ModelAdmin):
             'fields': ('street1', 'street2', 'city', 'state', 'zip', 'last_known_address')
         }),
         ('Medical & Other', {
-            'fields': ('medicaid_no', 'id_card', 'insurance', 'race', 'pref_service', 'pref_service_area')
+            'fields': ('medicaid_no', 'id_card', 'insurance', 'race', 'pref_service_area')
         }),
         ('Status', {
             'fields': ('employed', 'shower', 'hungry', 'homeless')

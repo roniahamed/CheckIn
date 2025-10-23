@@ -14,6 +14,7 @@ def generate_token(length=TOKEN_LENGTH):
 class AccessToken(models.Model):
     token = models.CharField(max_length=100, default=generate_token, unique=True)
     password = models.CharField(max_length=100)
+    # name = models.CharField(max_length=255)
     class Role(models.TextChoices):
         STAFF = 'form', 'Form'
         DOCTOR = 'doctor', 'Doctor'
@@ -41,9 +42,9 @@ class Patient(models.Model):
     pronoun = models.CharField(max_length=50, blank=True, null=True, choices=[
         ('he/him', 'He/Him'),
         ('she/her', 'She/Her'),])
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    phone = models.CharField(max_length=10, blank=True, null=True)
     emergency_contact = models.CharField(max_length=255, blank=True, null=True)
-    ssn = models.CharField(max_length=9, blank=True, null=True) # Social Security Number
+    ssn = models.CharField(max_length=10, blank=True, null=True) # Social Security Number
 
     # Address Information
     street1 = models.CharField(max_length=255, blank=True, null=True)
@@ -54,7 +55,7 @@ class Patient(models.Model):
     zip = models.CharField(max_length=10, blank=True, null=True)
     
     # Medical & Other Info
-    medicaid_no = models.CharField(max_length=100, blank=True, null=True)
+    medicaid_no = models.CharField(max_length=12, blank=True, null=True)
     id_card = models.CharField(max_length=100, blank=True, null=True, choices=[('yes', 'Yes'), ('no', 'No'),('lost/stolen', 'LOST/STOLEN'),], help_text='Do you have a valid ID card?')
     insurance = models.CharField(
         max_length=255,
@@ -82,20 +83,32 @@ class Patient(models.Model):
             ('biracial', 'Biracial'),
             ('asian', 'Asian'),
             ('hawaiian_pacific_islander', 'Hawaiian/Pacific Islander'),
+            ('other', 'Other'),
         ]
     )
-    pref_service = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True,
-        choices=[
-            ('yes', 'YES'),
-            ('yes', 'NO'),
-            ('lost/stolen', 'LOST/STOLEN'),
-        ]
-    )
-    pref_service_area = models.CharField(max_length=255, blank=True, null=True)
-    
+    # pref_service = models.CharField(
+    #     max_length=255,
+    #     blank=True,
+    #     null=True,
+    #     choices=[
+    #         ('yes', 'YES'),
+    #         ('yes', 'NO'),
+    #         ('lost/stolen', 'LOST/STOLEN'),
+    #     ]
+    # )
+
+    pref_service_area = models.CharField(max_length=255, blank=True, null=True, help_text='Preferred Service Area', choices=[
+        ('east_end', 'East End'),
+        ('west_end', 'West End'),
+        ('chesterfield', 'Chesterfield'),
+        ('chester', 'Chester'),
+        ('colonial_heights', 'Colonial Heights'),
+        ('north_side_richmond', 'North side Richmond'),
+        ('southside_richmond', 'Southside Richmond'),
+        ('church_hill', 'Church Hill'),
+        ('ashland', 'Ashland'),
+        ('hopewell', 'Hopewell'),
+        ])
     # Status
     employed = models.CharField( max_length=100, default='NO', choices=[('yes', 'Yes'), ('no', 'No'), ('disabled','Disabled')], help_text='Are you employed?', blank=True, null=True)
     shower = models.CharField(default='No', max_length=100, choices=[('yes', 'Yes'), ('no', 'No')], help_text='Do you need a shower?', blank=True, null=True)
