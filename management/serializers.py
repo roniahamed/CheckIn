@@ -92,7 +92,7 @@ class PatientSerializer(serializers.ModelSerializer):
         if value:
             cleaned_value = re.sub(r'\D', '', value)
             if not re.fullmatch(r'\d{10}', cleaned_value):
-                raise serializers.ValidationError("Medicaid number must be a 12-digit number.")
+                raise serializers.ValidationError("Medicaid number must be a 10-digit number.")
             return cleaned_value
         return value
 
