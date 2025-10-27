@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Patient
 from datetime import date
+from .models import Patient, QueueEntry
 import re
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -139,3 +139,19 @@ class PatientSerializer(serializers.ModelSerializer):
     def validate_shower(self, value): return self._validate_choice_field(value, 'shower')
     def validate_hungry(self, value): return self._validate_choice_field(value, 'hungry')
     def validate_homeless(self, value): return self._validate_choice_field(value, 'homeless')
+
+
+class QueuePatientSerializer(serializers.ModelSerializer):
+    """A simplified patient serializer for queue display."""
+    class Meta:
+        model = Patient
+        fields = ['id', 'fname', 'image']
+
+
+class QueueEntrySerializer(serializers.ModelSerializer):
+    """Serializer for queue entries."""
+    patient = QueuePatientSerializer(read_only=True)
+
+    class Meta:
+        model = QueueEntry
+        fields = ['id', 'patient', 'status', 'check_in_time']
