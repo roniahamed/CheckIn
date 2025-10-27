@@ -2,46 +2,41 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from .models import Patient
-from django.conf import settings 
+from django.conf import settings
 
 @shared_task
 def send_patient_checkin_email(patient_id):
+    print("Sending detailed email for patient ID:", patient_id)
     try:
         patient = Patient.objects.get(id=patient_id)
     except Patient.DoesNotExist:
         return "Patient not found."
 
-    patient_data = {
-        'ID': patient.id,
-        'Full Name': patient.fname,
-        'Date of Birth': patient.dob,
-        'Gender': patient.gender,
-        'Pronoun': patient.pronoun,
-        'Phone': patient.phone,
-        'Emergency Contact': patient.emergency_contact,
-        'SSN': patient.ssn,
-        'Address': f"{patient.street1 or ''} {patient.street2 or ''}, {patient.city or ''}, {patient.state or ''} {patient.zip or ''}",
-        'Last Known Address': patient.last_known_address,
-        'Medicaid No': patient.medicaid_no,
-        'ID Card': patient.id_card,
-        'Insurance': patient.insurance,
-        'Race': patient.race,
-        'Preferred Service Area': patient.pref_service_area,
-        'Employed': patient.employed,
-        'Shower': patient.shower,
-        'Hungry': patient.hungry,
-        'Homeless': patient.homeless,
-        'Image': patient.image.url if patient.image else None,
-        'Created At': patient.created_at,
-        'Updated At': patient.updated_at,
+    # Prepare patient data as a list of dictionaries for easier template iteration
+    patient_display_data = []
+    for field in patient._meta.fields:
+        patient_display_data.append({
+            'label': field.verbose_name,
+            'value': getattr(patient, field.name)
+        })
+
+    # Handle image URL separately and ensure it's an absolute URL for email clients
+    image_url = None
+    if patient.image:
+        # request object is not available in celery task, so we build the URL manually
+        image_url = f"{settings.SITE_DOMAIN}{patient.image.url}"
+
+    context = {
+        'patient_display_data': patient_display_data, 
+        'image_url': image_url
     }
-    
-    html_message = render_to_string('emails/patient_details.html', {'patient': patient_data})
+
+    html_message = render_to_string('emails/patient_details.html', context)
     
     subject = f"New Patient Check-in: {patient.fname}"
     message = f"A new patient has checked in. Details are attached." 
     from_email = settings.DEFAULT_FROM_EMAIL
-    recipient_list = ['mdronihamed56@gmail.com']  # Use a configured recipient list
+    recipient_list = settings.ADMIN_RECIPIENTS 
 
     send_mail(
         subject,

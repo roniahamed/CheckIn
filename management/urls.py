@@ -7,4 +7,4 @@ urlpatterns = [
     path('patients/', FormPatientView.as_view(), name='patient-list'),
     path('doctors/', DoctorPatientView.as_view(), name='queue-management'),
     path('queue/', QueueManagementView.as_view(), name='queue-list'),
-]   
+]
