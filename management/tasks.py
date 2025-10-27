@@ -25,7 +25,6 @@ def send_patient_checkin_email(patient_id):
         'ID Card': patient.id_card,
         'Insurance': patient.insurance,
         'Race': patient.race,
-        'Preferred Service': patient.pref_service,
         'Preferred Service Area': patient.pref_service_area,
         'Employed': patient.employed,
         'Shower': patient.shower,
@@ -40,8 +39,8 @@ def send_patient_checkin_email(patient_id):
     
     subject = f"New Patient Check-in: {patient.fname}"
     message = f"A new patient has checked in. Details are attached." 
-    from_email = 'your_email@gmail.com'
-    recipient_list = ['admin_email@example.com'] 
+    from_email = 'no-reply@yourdomain.com'  # Use a configured sender email
+    recipient_list = ['admin-notifications@yourdomain.com']  # Use a configured recipient list
 
     send_mail(
         subject,
