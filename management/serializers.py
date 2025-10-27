@@ -3,154 +3,139 @@ from .models import Patient
 from datetime import date
 import re
 
-
-# US state postal abbreviations for basic validation
-US_STATE_ABBREVS = {
-    'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA',
-    'ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK',
-    'OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'
-}
-
-
 class PatientSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField(read_only=True)
-    formatted_address = serializers.SerializerMethodField(read_only=True)
-    insurance_display = serializers.SerializerMethodField(read_only=True)
-    race_display = serializers.SerializerMethodField(read_only=True)
-    id_card_display = serializers.SerializerMethodField(read_only=True)
-    pronoun_display = serializers.SerializerMethodField(read_only=True)
-    pref_service_display = serializers.SerializerMethodField(read_only=True)
-    employed_display = serializers.SerializerMethodField(read_only=True)
-    shower_display = serializers.SerializerMethodField(read_only=True)
-    hungry_display = serializers.SerializerMethodField(read_only=True)
-    homeless_display = serializers.SerializerMethodField(read_only=True)
-
-    dob = serializers.DateField(required=False, allow_null=True)
-
     class Meta:
         model = Patient
-        exclude = ('wait_time',)
-        read_only_fields = ('created_at', 'updated_at')
+        fields = [
+            'id', 'fname', 'dob', 'gender', 'pronoun', 'phone', 'emergency_contact', 'ssn',
+            'street1', 'street2', 'last_known_address', 'city', 'state', 'zip',
+            'medicaid_no', 'id_card', 'insurance', 'race', 'pref_service_area',
+            'employed', 'shower', 'hungry', 'homeless',
+            'image', 'wait_time', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'wait_time', 'created_at', 'updated_at']
+        extra_kwargs = {
+            # Personal Information
+            'fname': {'required': True, 'allow_blank': False},
+            'dob': {'required': True},
+            'gender': {'required': True, 'allow_blank': False},
+            'pronoun': {'required': True, 'allow_blank': False},
+            'phone': {'required': True, 'allow_blank': False},
+            'emergency_contact': {'required': True, 'allow_blank': False},
+            'ssn': {'required': True, 'allow_blank': False},
+            # Address Information
+            'street1': {'required': True, 'allow_blank': False},
+            'street2': {'required': False, 'allow_blank': True}, # Street 2 is often optional
+            'last_known_address': {'required': True, 'allow_blank': False},
+            'city': {'required': True, 'allow_blank': False},
+            'state': {'required': True, 'allow_blank': False},
+            'zip': {'required': True, 'allow_blank': False},
+            # Medical & Other Info
+            'medicaid_no': {'required': False, 'allow_blank': True, 'allow_null': True}, # Explicitly optional
+            'id_card': {'required': True, 'allow_blank': False},
+            'insurance': {'required': True, 'allow_blank': False},
+            'race': {'required': True, 'allow_blank': False},
+            'pref_service_area': {'required': True, 'allow_blank': False},
+            # Status
+            'employed': {'required': True, 'allow_blank': False},
+            'shower': {'required': True, 'allow_blank': False},
+            'hungry': {'required': True, 'allow_blank': False},
+            'homeless': {'required': True, 'allow_blank': False},
+            # System
+            'image': {'required': False},
+        }
 
-    def get_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.image and hasattr(obj.image, 'url'):
-            url = obj.image.url
-            if request is not None:
-                return request.build_absolute_uri(url)
-            return url
-        return None
-
-    def get_formatted_address(self, obj):
-        parts = [obj.street1 or '', obj.street2 or '']
-        city_state = ', '.join(filter(None, [obj.city, obj.state]))
-        if obj.zip:
-            city_state = f"{city_state} {obj.zip}".strip()
-        if city_state:
-            parts.append(city_state)
-        return ', '.join([p for p in [p.strip() for p in parts] if p])
-
-    # Choice display getters
-    def _get_display(self, obj, field):
-        try:
-            return getattr(obj, f'get_{field}_display')()
-        except Exception:
-            return getattr(obj, field)
-
-    def get_insurance_display(self, obj):
-        return self._get_display(obj, 'insurance')
-
-    def get_race_display(self, obj):
-        return self._get_display(obj, 'race')
-
-    def get_id_card_display(self, obj):
-        return self._get_display(obj, 'id_card')
-
-    def get_pronoun_display(self, obj):
-        return self._get_display(obj, 'pronoun')
-
-    def get_pref_service_display(self, obj):
-        return self._get_display(obj, 'pref_service')
-
-    def _bool_display(self, value):
-        if value is None:
-            return None
-        if isinstance(value, bool):
-            return 'Yes' if value else 'No'
-        # Fallback for non-boolean fields that store choices
-        return str(value)
-
-    def get_employed_display(self, obj):
-        return self._bool_display(obj.employed)
-
-    def get_shower_display(self, obj):
-        return self._bool_display(obj.shower)
-
-    def get_hungry_display(self, obj):
-        return self._bool_display(obj.hungry)
-
-    def get_homeless_display(self, obj):
-        return self._bool_display(obj.homeless)
-
-    # Validators tailored for US formats
     def validate_ssn(self, value):
-        if value in (None, ''):
-            return value
-        digits = re.sub(r"\D", "", str(value))
-        if len(digits) != 9:
-            raise serializers.ValidationError('SSN must contain 9 digits.')
-        if digits == '000000000':
-            raise serializers.ValidationError('Invalid SSN.')
-        # Block obviously invalid ranges (basic check)
-        if digits.startswith(('000', '666')) or 900 <= int(digits[:3]) <= 999:
-            raise serializers.ValidationError('Invalid SSN prefix.')
-        return digits
-
-    def validate_phone(self, value):
-        if value in (None, ''):
-            return value
-        digits = re.sub(r"\D", "", str(value))
-        # Accept 10-digit (US) or 11-digit starting with '1'
-        if len(digits) == 11 and digits.startswith('1'):
-            digits = digits[1:]
-        if len(digits) != 10:
-            raise serializers.ValidationError('Enter a valid US phone number with 10 digits (area code + number).')
-        # Basic area code and exchange checks (cannot start with 0 or 1)
-        if digits[0] in ('0', '1') or digits[3] in ('0', '1'):
-            # Warning: this may reject some valid historical numbers but works for common validation
-            raise serializers.ValidationError('Enter a valid US phone number (invalid area or exchange code).')
-        # Return standardized format: (XXX) XXX-XXXX
-        return f"({digits[0:3]}) {digits[3:6]}-{digits[6:]}"
-
-    def validate_zip(self, value):
-        if value in (None, ''):
-            return value
-        v = str(value).strip()
-        # Accept 5-digit or 5+4 (12345 or 12345-6789)
-        if re.fullmatch(r"\d{5}(-\d{4})?", v):
-            return v
-        raise serializers.ValidationError('Enter a valid US ZIP code (12345 or 12345-6789).')
-
-    def validate_state(self, value):
-        if value in (None, ''):
-            return value
-        v = str(value).strip().upper()
-        if v not in US_STATE_ABBREVS:
-            raise serializers.ValidationError('Enter a valid US state postal abbreviation (e.g., NY, CA).')
-        return v
-
-    def validate_dob(self, value):
-        if value is None:
-            return value
-        if value > date.today():
-            raise serializers.ValidationError('Date of birth cannot be in the future.')
-        age = (date.today() - value).days / 365.25
-        if age > 120:
-            raise serializers.ValidationError('Age seems unrealistic.')
+        """
+        Validates that the SSN is exactly 10 digits.
+        """
+        if value:
+            # Allow SSN with or without hyphens, but strip them for validation and storage.
+            cleaned_value = value.replace('-', '')
+            if not re.fullmatch(r'\d{10}', cleaned_value):
+                raise serializers.ValidationError("SSN must be a 10-digit number.")
+            return cleaned_value
         return value
 
+    def validate_dob(self, value):
+        """
+        Validates that the date of birth is not in the future.
+        """
+        if value and value > date.today():
+            raise serializers.ValidationError("Date of birth cannot be in the future.")
+        return value
 
-class PatientSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Patient
-        exclude = ('wait_time', 'created_at', 'updated_at')
+    def validate_phone(self, value):
+        """
+        Validates that the phone number is exactly 10 digits.
+        """
+        if value:
+            # Allow phone number with common formatting, but strip non-digits.
+            cleaned_value = re.sub(r'\D', '', value)
+            if not re.fullmatch(r'\d{10}', cleaned_value):
+                raise serializers.ValidationError("Phone number must be a 10-digit number.")
+            return cleaned_value
+        return value
+
+    def validate_zip(self, value):
+        """
+        Validates that the ZIP code is 5 digits.
+        """
+        if value:
+            if not re.fullmatch(r'\d{5}', value):
+                raise serializers.ValidationError("ZIP code must be a 5-digit number.")
+        return value
+    def validate_medicaid_no(self, value):
+        """
+        Validates that the Medicaid number is 10 digits.
+        """
+        if value:
+            cleaned_value = re.sub(r'\D', '', value)
+            if not re.fullmatch(r'\d{10}', cleaned_value):
+                raise serializers.ValidationError("Medicaid number must be a 12-digit number.")
+            return cleaned_value
+        return value
+
+    # def validate_state(self, value):
+    #     """
+    #     Validates that the state is a valid 2-letter US state abbreviation.
+    #     """
+    #     if value:
+    #         # Normalize to uppercase and check against the set of valid abbreviations
+    #         if value.upper() not in US_STATES:
+    #             raise serializers.ValidationError("Please enter a valid 2-letter US state abbreviation.")
+    #         return value.upper()
+    #     return value
+    
+    def validate_image(self, value):
+        """
+        Validates that the uploaded image is of an acceptable type and size.
+        """
+        if value:
+            valid_mime_types = ['image/jpeg', 'image/png']
+            file_mime_type = value.file.content_type
+            if file_mime_type not in valid_mime_types:
+                raise serializers.ValidationError("Unsupported image type. Only JPEG and PNG are allowed.")
+            if value.size > 5 * 1024 * 1024:  # 5 MB limit
+                raise serializers.ValidationError("Image size should not exceed 5 MB.")
+        return value
+    
+    def _validate_choice_field(self, value, field_name):
+        """Helper to validate a value against a model's choice field."""
+        # Get all valid choice keys from the model field
+        valid_choices = [choice[0] for choice in self.Meta.model._meta.get_field(field_name).choices]
+        if value not in valid_choices:
+            # Provide a helpful error message with the available options
+            raise serializers.ValidationError(f"Invalid choice. Available options are: {', '.join(valid_choices)}.")
+        return value
+
+    def validate_gender(self, value): return self._validate_choice_field(value, 'gender')
+    def validate_pronoun(self, value): return self._validate_choice_field(value, 'pronoun')
+    def validate_id_card(self, value): return self._validate_choice_field(value, 'id_card')
+    def validate_insurance(self, value): return self._validate_choice_field(value, 'insurance')
+    def validate_race(self, value): return self._validate_choice_field(value, 'race')
+    def validate_pref_service_area(self, value): return self._validate_choice_field(value, 'pref_service_area')
+    def validate_employed(self, value): return self._validate_choice_field(value, 'employed')
+    def validate_shower(self, value): return self._validate_choice_field(value, 'shower')
+    def validate_hungry(self, value): return self._validate_choice_field(value, 'hungry')
+    def validate_homeless(self, value): return self._validate_choice_field(value, 'homeless')
