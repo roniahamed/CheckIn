@@ -11,7 +11,7 @@ from channels.layers import get_channel_layer
 from django.db import transaction
 
 from .models import Patient, QueueEntry
-from .serializers import PatientSerializer
+from .serializers import PatientSerializer, QueueEntrySerializer
 from .tasks import send_patient_checkin_email
 
 
@@ -67,8 +67,9 @@ class FormPatientView(APIView):
                     'event': 'PATIENT_ADDED',
                     'patient': {
                         'id': patient.id,
-                        'name': patient.fname,
+                        'fname': patient.fname,
                         'status': 'waiting',
+                        'image': patient.image.url if patient.image else None,
                     }
                 }
             )
@@ -99,7 +100,12 @@ class DoctorPatientView(APIView):
                     entry.called_at = timezone.now()
                     entry.save()
 
-                    patient_data = { 'id': entry.patient.id, 'name': entry.patient.fname, 'status': 'in_consultation' }
+                    patient_data = {
+                        'id': entry.patient.id,
+                        'fname': entry.patient.fname,
+                        'status': 'in_consultation',
+                        'image': entry.patient.image.url if entry.patient.image else None,
+                    }
                     event_type = 'PATIENT_CALLED'
             except Exception as e:
                 return Response({'error': "Could not process the request. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -118,7 +124,12 @@ class DoctorPatientView(APIView):
             patient.wait_time = wait_time
             patient.save()
 
-            patient_data = { 'id': patient.id, 'name': patient.fname, 'status': 'completed' }
+            patient_data = {
+                'id': patient.id,
+                'fname': patient.fname,
+                'status': 'completed',
+                'image': patient.image.url if patient.image else None,
+            }
             event_type = 'PATIENT_COMPLETED'
         else:
             return Response({'error': 'Invalid action or missing patient.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -144,15 +155,6 @@ class QueueManagementView(APIView):
     # permission_classes = [IsQueueManager]
 
     def get(self, request):
-        queue_entries = QueueEntry.objects.select_related('patient').exclude(status=QueueEntry.Status.COMPLETED)
-
-        data = [
-            {
-                'id': entry.patient.id,
-                'name': entry.patient.fname,
-                'status': entry.status,
-                'check_in_time': entry.check_in_time,
-            }
-            for entry in queue_entries  
-        ]
-        return Response(data)
+        queue_entries = QueueEntry.objects.select_related('patient').filter(status__in=[QueueEntry.Status.WAITING, QueueEntry.Status.IN_CONSULTATION])
+        serializer = QueueEntrySerializer(queue_entries, many=True)
+        return Response(serializer.data)
