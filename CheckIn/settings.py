@@ -23,6 +23,7 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 SECRET_KEY = config("SECRET_KEY")
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv())
 SITE_URL = config("SITE_URL", default="http://localhost:9000")
+SITE_DOMAIN = config("SITE_DOMAIN", default="http://localhost:8000")
 
 
 # Application definition
@@ -190,7 +191,7 @@ EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="webmaster@localhost")
-ADMIN_RECIPIENTS = ['mdronihamed56@gmail.com'] 
+ADMIN_RECIPIENTS = ['mdroniahamed56@gmail.com'] 
 
 
 # =====================
