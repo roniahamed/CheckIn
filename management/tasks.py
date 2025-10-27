@@ -2,6 +2,7 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from .models import Patient
+from django.conf import settings 
 
 @shared_task
 def send_patient_checkin_email(patient_id):
@@ -39,8 +40,8 @@ def send_patient_checkin_email(patient_id):
     
     subject = f"New Patient Check-in: {patient.fname}"
     message = f"A new patient has checked in. Details are attached." 
-    from_email = 'no-reply@yourdomain.com'  # Use a configured sender email
-    recipient_list = ['admin-notifications@yourdomain.com']  # Use a configured recipient list
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = ['mdronihamed56@gmail.com']  # Use a configured recipient list
 
     send_mail(
         subject,
