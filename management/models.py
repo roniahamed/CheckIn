@@ -1,5 +1,6 @@
 from django.db import models
 import random, string
+from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 
 TOKEN_LENGTH = 8 
@@ -13,7 +14,7 @@ def generate_token(length=TOKEN_LENGTH):
 
 class AccessToken(models.Model):
     token = models.CharField(max_length=100, default=generate_token, unique=True)
-    password = models.CharField(max_length=100)
+    password = models.CharField(max_length=128)  # Increased length for hashed password
     # name = models.CharField(max_length=255)
     class Role(models.TextChoices):
         STAFF = 'form', 'Form'
@@ -23,6 +24,12 @@ class AccessToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
 
 
     def __str__(self):
