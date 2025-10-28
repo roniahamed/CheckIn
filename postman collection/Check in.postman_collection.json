@@ -1,0 +1,295 @@
+{
+	"info": {
+		"_postman_id": "a421a724-5eb6-4b34-99d2-b3db942f1d28",
+		"name": "Check in",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47397198",
+		"_collection_link": "https://www.postman.com/roniahamed-7598805/workspace/softnove/collection/47397198-a421a724-5eb6-4b34-99d2-b3db942f1d28?action=share&source=collection_link&creator=47397198"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "login views",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"// Assuming the response contains a token field",
+									"const responseJson = pm.response.json();",
+									"",
+									"console.log(responseJson)",
+									"if (responseJson.access) {",
+									"    pm.environment.set(\"authToken\", responseJson.access);",
+									"    pm.environment.set(\"role\", responseJson.role);",
+									"    pm.environment.set(\"refreshToken\", responseJson.refresh);",
+									"    console.log(\"Token saved to environment:\", responseJson.access);",
+									"} else {",
+									"    console.error(\"Token not found in response\");",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"token\": \"59099095\",\n\"password\":\"admin\",\n\"role\" : \"form\"\n}\n\n// {\n// \"token\": \"80381305\",\n// \"password\":\"admin\"\n// // \"role\" : \"doctor\"\n// }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base}}/login/",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "patients",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Roni-Authorization",
+								"value": "Bearer  {{vault:json-web-token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"53020560\",\n    \"password\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base}}/queue/",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"queue",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"protocolProfileBehavior": {
+						"protocolVersion": "auto"
+					},
+					"request": {
+						"method": "OPTIONS",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Patient",
+			"item": [
+				{
+					"name": "new patient",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Roni-Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"id\": 2,\n\"fname\": \"Emily\",\n\"dob\": \"1985-03-15\",\n\"gender\": \"female\",\n\"pronoun\": \"she/her\",\n\"phone\": \"1234567891\",\n\"emergency_contact\": \"Jane Smith (Sister), (213) 555-0456\",\n\"ssn\": \"1234567892\",\n\"street1\": \"456 Oak Avenue\",\n\"street2\": \"Apt 2C\",\n\"last_known_address\": \"456 Oak Avenue, Apt 2C, Los Angeles, CA 90001\",\n\"city\": \"Los Angeles\",\n\"state\": \"CA\",\n\"zip\": \"90001\",\n\"medicaid_no\": \"1234567892\",\n\"id_card\": \"yes\",\n\"insurance\": \"aetna\",\n\"race\": \"caucasian\",\n\"pref_service\": \"yes\",\n\"pref_service_area\": \"east_end\",\n\"employed\": \"no\",\n\"shower\": \"no\",\n\"hungry\": \"no\",\n\"homeless\": \"yes\",\n\"image\": null\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/patients/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"patients",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Doctor",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check the response status code",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"// Parse the response body",
+									"const response = pm.response.json();",
+									"",
+									"// Check if the patient object exists",
+									"pm.test(\"Patient object exists\", function () {",
+									"    pm.expect(response.patient).to.exist;",
+									"});",
+									"",
+									"// Save the patient ID to the environment",
+									"if (response.patient && response.patient.id) {",
+									"    pm.environment.set(\"patientId\", response.patient.id);",
+									"    pm.test(\"Patient ID is saved in the environment\", function () {",
+									"        pm.expect(pm.environment.get(\"patientId\")).to.equal(response.patient.id);",
+									"    });",
+									"} else {",
+									"    pm.test(\"Patient ID does not exist in the response\", function () {",
+									"        pm.expect.fail(\"Patient ID is missing\");",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Roni-Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"complete\",\n    \"patient_id\": {{patientId}} \n}\n\n// {\n//     \"action\": \"call_next\"\n// }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base}}/doctors/",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"doctors",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Waiting list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Roni-Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\n//     \"action\": \"complete\",\n//     \"patient_id\": {{patientId}} \n// }\n\n{\n    \"action\": \"call_next\"\n}"
+						},
+						"url": {
+							"raw": "{{base}}/queue/",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"queue",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		}
+	]
+}
