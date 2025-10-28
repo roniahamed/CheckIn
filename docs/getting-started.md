@@ -104,6 +104,12 @@ The system will auto-generate an 8-digit token.
 redis-server
 ```
 
+**Note**: If you get "Address already in use" error, Redis is already running. You can verify with:
+```bash
+redis-cli ping
+# Should return: PONG
+```
+
 ### 9. Start Celery Worker
 
 In a new terminal:
