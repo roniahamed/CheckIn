@@ -288,6 +288,19 @@ daphne -b 0.0.0.0 -p 8000 CheckIn.asgi:application
 - Verify Redis is running: `redis-cli ping` should return `PONG`
 - Check WebSocket URL: `ws://localhost:8000/ws/queue/`
 
+### Redis "Address already in use" error
+- Redis is already running, no need to start it again
+- Check if Redis is running: `redis-cli ping`
+- If you need to restart Redis:
+  ```bash
+  # Find Redis process
+  ps aux | grep redis-server
+  # Kill the process (replace PID with actual process ID)
+  kill <PID>
+  # Then start Redis again
+  redis-server
+  ```
+
 ### Email not sending
 - Check Celery worker is running
 - Verify email configuration in `.env`
