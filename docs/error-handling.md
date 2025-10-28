@@ -527,4 +527,39 @@ function logError(context, error) {
 ```
 
 ---
-*Last Updated: October 28, 2025*
+
+## System Errors
+
+### Redis Connection Errors
+
+**Error**: "Address already in use" when starting Redis
+
+**Cause**: Redis is already running on port 6379
+
+**Solution**: 
+```bash
+# Check if Redis is running
+redis-cli ping
+# Should return: PONG
+
+# If you need to restart Redis:
+ps aux | grep redis-server
+kill <PID>
+redis-server
+```
+
+**Error**: "Connection refused" when connecting to Redis
+
+**Cause**: Redis server is not running
+
+**Solution**:
+```bash
+# Start Redis server
+redis-server
+
+# Or run Redis in background
+redis-server --daemonize yes
+```
+
+---
+*Last Updated: October 29, 2025*
