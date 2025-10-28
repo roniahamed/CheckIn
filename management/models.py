@@ -2,6 +2,7 @@ from django.db import models
 import random, string
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
+from django.core.cache import cache
 
 TOKEN_LENGTH = 8 
 
@@ -149,3 +150,58 @@ class QueueEntry(models.Model):
 
     def __str__(self):
         return f"{self.patient.fname} - {self.status}"
+
+
+class SiteSettings(models.Model):
+    """Editable site-wide settings managed from the Admin.
+
+    Use SiteSettings.get_admin_recipients() to get the current list
+    of admin recipient emails (falls back to settings.ADMIN_RECIPIENTS if empty).
+    """
+    admin_recipients = models.TextField(
+        blank=True,
+        default="",
+        help_text="Comma-separated list of recipient email addresses for admin notifications.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Site Settings"
+        verbose_name_plural = "Site Settings"
+
+    def __str__(self):
+        return "Site Settings"
+
+    def recipients_list(self):
+        return [e.strip() for e in self.admin_recipients.split(',') if e.strip()]
+
+    @classmethod
+    def get_solo(cls):
+        # Ensure a single row exists (pk=1);
+        # avoids creating multiple settings records.
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @classmethod
+    def get_admin_recipients(cls):
+        from django.conf import settings as django_settings
+
+        cache_key = "sitesettings_admin_recipients"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        # Load from DB if available
+        try:
+            obj = cls.get_solo()
+            recipients = obj.recipients_list()
+        except Exception:
+            recipients = []
+
+        # Fallback to settings if empty
+        if not recipients:
+            recipients = getattr(django_settings, "ADMIN_RECIPIENTS", [])
+
+        cache.set(cache_key, recipients, 60)  # cache for 60 seconds
+        return recipients

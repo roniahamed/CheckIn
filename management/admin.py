@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import AccessToken, Patient, QueueEntry
+from .models import AccessToken, Patient, QueueEntry, SiteSettings
 from unfold.admin import ModelAdmin
 from .tasks import send_patient_checkin_email
 
@@ -96,3 +96,25 @@ class QueueEntryAdmin(ModelAdmin):
 
     patient_link.short_description = 'Patient'
     
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(ModelAdmin):
+    list_display = ("__str__", "updated_at")
+    fieldsets = (
+        ("Admin Notifications", {
+            "fields": ("admin_recipients",),
+            "description": "Enter a comma-separated list of email addresses to receive admin notifications.",
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at"),
+        }),
+    )
+    readonly_fields = ("created_at", "updated_at")
+
+    def has_add_permission(self, request):
+        # Allow adding only if there is no existing settings record
+        from .models import SiteSettings
+        if SiteSettings.objects.exists():
+            return False
+        return super().has_add_permission(request)
+
