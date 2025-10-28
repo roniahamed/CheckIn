@@ -111,6 +111,19 @@ Welcome to the CheckIn API Documentation! This index provides an overview of all
 
 ---
 
+### 🚀 Production Deployment
+**[deployment.md](deployment.md)** (26 KB)
+- Nginx configuration
+- Gunicorn with Uvicorn workers
+- Systemd services setup
+- Auto-start on system reboot
+- SSL/TLS configuration
+- Monitoring and maintenance
+
+**Start here if**: You're deploying to production with Nginx and Gunicorn.
+
+---
+
 ## 📋 By Use Case
 
 ### I want to...
