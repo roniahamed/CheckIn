@@ -151,12 +151,15 @@ class QueueEntry(models.Model):
         return f"{self.patient.fname} - {self.status}"
 
 
-class SiteSettings(models.Model):
-    """Editable site-wide settings managed from the Admin.
+class AdminGmailList(models.Model):
+    """Admin-editable singleton list of notification emails.
 
-    Use SiteSettings.get_admin_recipients() to get the current list
-    of admin recipient emails (falls back to settings.ADMIN_RECIPIENTS if empty).
+    Database-level singleton enforced via a unique constant key.
+    Use AdminGmailList.get_admin_recipients() to obtain the emails.
     """
+    # Enforce one row at DB level: all rows would have value 1, unique constraint prevents duplicates
+    singleton_key = models.PositiveSmallIntegerField(default=1, unique=True, editable=False)
+
     admin_recipients = models.TextField(
         blank=True,
         default="",
@@ -166,23 +169,18 @@ class SiteSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Site Settings"
-        verbose_name_plural = "Site Settings"
+        verbose_name = "Admin Gmail List"
+        verbose_name_plural = "Admin Gmail List"
 
     def __str__(self):
-        return "Site Settings"
+        return "Admin Gmail List"
 
     def recipients_list(self):
         return [e.strip() for e in self.admin_recipients.split(',') if e.strip()]
 
     @classmethod
     def get_current(cls):
-        """Return the most recently updated settings row, creating one if none exist.
-
-        This avoids relying on a fixed primary key and works even if multiple
-        rows were created previously.
-        """
-        # Prefer the most recently updated row that has non-empty recipients
+        """Return the most recently updated record with non-empty recipients, else any record, or create one."""
         obj = (
             cls.objects
             .exclude(admin_recipients__isnull=True)
@@ -191,7 +189,6 @@ class SiteSettings(models.Model):
             .first()
         )
         if obj is None:
-            # Fall back to any row, then create if none exists
             obj = cls.objects.order_by('-updated_at', '-id').first()
         if obj is None:
             obj = cls.objects.create()
@@ -201,14 +198,12 @@ class SiteSettings(models.Model):
     def get_admin_recipients(cls):
         from django.conf import settings as django_settings
 
-        # Load from DB if available (no per-process cache to avoid Celery stale reads)
         try:
             obj = cls.get_current()
             recipients = obj.recipients_list()
         except Exception:
             recipients = []
 
-        # Fallback to settings if empty
         if not recipients:
             recipients = getattr(django_settings, "ADMIN_RECIPIENTS", [])
         return recipients

@@ -238,6 +238,8 @@ daphne -b 0.0.0.0 -p 8000 CheckIn.asgi:application
 
 ---
 
+
+
 ## Access Token Roles
 
 | Role | Value | Can Access |
@@ -313,4 +315,4 @@ daphne -b 0.0.0.0 -p 8000 CheckIn.asgi:application
 
 ---
 
-*Last Updated: October 28, 2025*
+*Last Updated: October 29, 2025*

@@ -3,7 +3,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from .models import Patient
 from django.conf import settings
-from .models import SiteSettings
+from .models import AdminGmailList
 
 @shared_task
 def send_patient_checkin_email(patient_id):
@@ -37,8 +37,8 @@ def send_patient_checkin_email(patient_id):
     subject = f"New Patient Check-in: {patient.fname}"
     message = f"A new patient has checked in. Details are attached." 
     from_email = settings.DEFAULT_FROM_EMAIL
-    # Get recipients from admin-editable settings, falling back to settings.ADMIN_RECIPIENTS
-    recipient_list = SiteSettings.get_admin_recipients()
+    # Get recipients from admin-editable list, falling back to settings.ADMIN_RECIPIENTS
+    recipient_list = AdminGmailList.get_admin_recipients()
 
     send_mail(
         subject,
