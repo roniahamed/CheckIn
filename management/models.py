@@ -2,7 +2,6 @@ from django.db import models
 import random, string
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
-from django.core.cache import cache
 
 TOKEN_LENGTH = 8 
 
@@ -177,24 +176,34 @@ class SiteSettings(models.Model):
         return [e.strip() for e in self.admin_recipients.split(',') if e.strip()]
 
     @classmethod
-    def get_solo(cls):
-        # Ensure a single row exists (pk=1);
-        # avoids creating multiple settings records.
-        obj, _ = cls.objects.get_or_create(pk=1)
+    def get_current(cls):
+        """Return the most recently updated settings row, creating one if none exist.
+
+        This avoids relying on a fixed primary key and works even if multiple
+        rows were created previously.
+        """
+        # Prefer the most recently updated row that has non-empty recipients
+        obj = (
+            cls.objects
+            .exclude(admin_recipients__isnull=True)
+            .exclude(admin_recipients__exact="")
+            .order_by('-updated_at', '-id')
+            .first()
+        )
+        if obj is None:
+            # Fall back to any row, then create if none exists
+            obj = cls.objects.order_by('-updated_at', '-id').first()
+        if obj is None:
+            obj = cls.objects.create()
         return obj
 
     @classmethod
     def get_admin_recipients(cls):
         from django.conf import settings as django_settings
 
-        cache_key = "sitesettings_admin_recipients"
-        cached = cache.get(cache_key)
-        if cached is not None:
-            return cached
-
-        # Load from DB if available
+        # Load from DB if available (no per-process cache to avoid Celery stale reads)
         try:
-            obj = cls.get_solo()
+            obj = cls.get_current()
             recipients = obj.recipients_list()
         except Exception:
             recipients = []
@@ -202,6 +211,4 @@ class SiteSettings(models.Model):
         # Fallback to settings if empty
         if not recipients:
             recipients = getattr(django_settings, "ADMIN_RECIPIENTS", [])
-
-        cache.set(cache_key, recipients, 60)  # cache for 60 seconds
         return recipients
