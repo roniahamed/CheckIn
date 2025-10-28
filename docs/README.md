@@ -15,6 +15,7 @@ CheckIn is a Django-based patient management system designed for healthcare faci
 7. [Error Handling](error-handling.md)
 8. [Examples](examples.md)
 9. [Quick Reference](quick-reference.md)
+10. [Production Deployment](deployment.md)
 
 ## Key Features
 
