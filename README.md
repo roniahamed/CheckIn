@@ -23,6 +23,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) folder:
 - **[Error Handling](docs/error-handling.md)** - Error codes and troubleshooting
 - **[Examples](docs/examples.md)** - Code examples in JavaScript, Python, React
 - **[Quick Reference](docs/quick-reference.md)** - Cheat sheet for common tasks
+- **[Production Deployment](docs/deployment.md)** - Nginx, Gunicorn, systemd setup
 
 ## 🛠️ Tech Stack
 
