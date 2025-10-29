@@ -44,11 +44,15 @@ class Patient(models.Model):
     gender = models.CharField(max_length=50, blank=True, null=True, choices=[
         ('male', 'Male'),
         ('female', 'Female'),
+        ('non_binary', 'Non-binary'),
         ('other', 'Other'),
     ])
     pronoun = models.CharField(max_length=50, blank=True, null=True, choices=[
-        ('he/him', 'He/Him'),
-        ('she/her', 'She/Her'),])
+        ('he_him', 'He/Him'),
+        ('she_her', 'She/Her'),
+        ('they_them', 'They/Them'),
+        ('other', 'Other'),
+    ])
     phone = models.CharField(max_length=10, blank=True, null=True)
     emergency_contact = models.CharField(max_length=255, blank=True, null=True)
     ssn = models.CharField(max_length=10, blank=True, null=True) # Social Security Number
@@ -58,12 +62,17 @@ class Patient(models.Model):
     street2 = models.CharField(max_length=255, blank=True, null=True)
     last_known_address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True, choices=[
+        ('VA', 'Virginia'),
+        ('MD', 'Maryland'),
+        ('NC', 'North Carolina'),
+        ('SC', 'South Carolina'),
+    ])
     zip = models.CharField(max_length=10, blank=True, null=True)
     
     # Medical & Other Info
     medicaid_no = models.CharField(max_length=12, blank=True, null=True)
-    id_card = models.CharField(max_length=100, blank=True, null=True, choices=[('yes', 'Yes'), ('no', 'No'),('lost/stolen', 'LOST/STOLEN'),], help_text='Do you have a valid ID card?')
+    id_card = models.CharField(max_length=100, blank=True, null=True, choices=[('yes', 'YES'), ('no', 'NO'), ('lost', 'LOST/STOLEN')], help_text='Do you have a valid ID card?')
     insurance = models.CharField(
         max_length=255,
         blank=True,
@@ -75,6 +84,7 @@ class Patient(models.Model):
             ('anthem', 'Anthem'),
             ('sentara', 'Sentara'),
             ('united', 'United'),
+            ('dont_know', "I Don't Know"),
         ]
     )
     race = models.CharField(
@@ -86,9 +96,10 @@ class Patient(models.Model):
             ('black_african_american', 'Black/African American'),
             ('caucasian', 'Caucasian'),
             ('hispanic_latino', 'Hispanic/Latino'),
-            ('american_indian_or_alaskan_native', 'American Indian or Alaskan Native'),
+            ('american_indian_alaskan_native', 'American Indian or Alaskan Native'),
             ('biracial', 'Biracial'),
             ('asian', 'Asian'),
+            ('middle_eastern', 'Middle Eastern'),
             ('hawaiian_pacific_islander', 'Hawaiian/Pacific Islander'),
             ('other', 'Other'),
         ]
@@ -105,6 +116,7 @@ class Patient(models.Model):
     # )
 
     pref_service_area = models.CharField(max_length=255, blank=True, null=True, help_text='Preferred Service Area', choices=[
+        ('petersburg', 'Petersburg'),
         ('east_end', 'East End'),
         ('west_end', 'West End'),
         ('chesterfield', 'Chesterfield'),
@@ -115,12 +127,12 @@ class Patient(models.Model):
         ('church_hill', 'Church Hill'),
         ('ashland', 'Ashland'),
         ('hopewell', 'Hopewell'),
-        ])
+    ])
     # Status
-    employed = models.CharField( max_length=100, default='NO', choices=[('yes', 'Yes'), ('no', 'No'), ('disabled','Disabled')], help_text='Are you employed?', blank=True, null=True)
-    shower = models.CharField(default='No', max_length=100, choices=[('yes', 'Yes'), ('no', 'No')], help_text='Do you need a shower?', blank=True, null=True)
-    hungry = models.CharField(default='No', max_length=100, choices=[('yes', 'Yes'), ('no', 'No')], help_text='Are you hungry?', blank=True, null=True)
-    homeless = models.CharField(default='Yes', max_length=100, choices=[('yes', 'Yes'), ('no', 'No'), ('staying/someone', 'Staying / Someone')], help_text='Are you homeless?', blank=True, null=True)
+    employed = models.CharField( max_length=100, default='no', choices=[('yes', 'YES'), ('no', 'NO'), ('disabled', 'DISABLED'), ('retired', 'RETIRED')], help_text='Are you employed?', blank=True, null=True)
+    shower = models.CharField(default='no', max_length=100, choices=[('yes', 'YES'), ('no', 'NO')], help_text='Do you need a shower?', blank=True, null=True)
+    hungry = models.CharField(default='no', max_length=100, choices=[('yes', 'YES'), ('no', 'NO')], help_text='Are you hungry?', blank=True, null=True)
+    homeless = models.CharField(default='yes', max_length=100, choices=[('yes', 'YES'), ('no', 'NO')], help_text='Are you homeless?', blank=True, null=True)
 
     # System Fields
     image = models.ImageField(upload_to='patient_images/', blank=True, null=True)
