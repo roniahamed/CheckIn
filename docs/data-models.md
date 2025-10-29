@@ -102,7 +102,7 @@ Stores comprehensive patient information including personal details, address, me
 | `street2` | CharField | Street address line 2 | Max 255 chars, optional |
 | `last_known_address` | CharField | Last known address | Max 255 chars |
 | `city` | CharField | City | Max 100 chars |
-| `state` | CharField | State | Max 100 chars |
+| `state` | CharField | State | Max 100 chars, choices |
 | `zip` | CharField | ZIP code | Max 10 chars, 5 digits |
 
 ### Medical & Insurance Fields
@@ -119,10 +119,10 @@ Stores comprehensive patient information including personal details, address, me
 
 | Field | Type | Description | Constraints |
 |-------|------|-------------|-------------|
-| `employed` | CharField | Employment status | Max 100 chars, choices, default: 'NO' |
-| `shower` | CharField | Needs shower? | Max 100 chars, choices, default: 'No' |
-| `hungry` | CharField | Is hungry? | Max 100 chars, choices, default: 'No' |
-| `homeless` | CharField | Housing status | Max 100 chars, choices, default: 'Yes' |
+| `employed` | CharField | Employment status | Max 100 chars, choices, default: 'no' |
+| `shower` | CharField | Needs shower? | Max 100 chars, choices, default: 'no' |
+| `hungry` | CharField | Is hungry? | Max 100 chars, choices, default: 'no' |
+| `homeless` | CharField | Housing status | Max 100 chars, choices, default: 'yes' |
 
 ### System Fields
 
@@ -138,16 +138,19 @@ Stores comprehensive patient information including personal details, address, me
 #### Gender Choices
 - `male` - Male
 - `female` - Female
+- `non_binary` - Non-binary
 - `other` - Other
 
 #### Pronoun Choices
-- `he/him` - He/Him
-- `she/her` - She/Her
+- `he_him` - He/Him
+- `she_her` - She/Her
+- `they_them` - They/Them
+- `other` - Other
 
 #### ID Card Choices
-- `yes` - Yes
-- `no` - No
-- `lost/stolen` - LOST/STOLEN
+- `yes` - YES
+- `no` - NO
+- `lost` - LOST/STOLEN
 
 #### Insurance Choices
 - `humana` - Humana
@@ -156,18 +159,21 @@ Stores comprehensive patient information including personal details, address, me
 - `anthem` - Anthem
 - `sentara` - Sentara
 - `united` - United
+- `dont_know` - I Don't Know
 
 #### Race Choices
 - `black_african_american` - Black/African American
 - `caucasian` - Caucasian
 - `hispanic_latino` - Hispanic/Latino
-- `american_indian_or_alaskan_native` - American Indian or Alaskan Native
+- `american_indian_alaskan_native` - American Indian or Alaskan Native
 - `biracial` - Biracial
 - `asian` - Asian
+- `middle_eastern` - Middle Eastern
 - `hawaiian_pacific_islander` - Hawaiian/Pacific Islander
 - `other` - Other
 
 #### Preferred Service Area Choices
+- `petersburg` - Petersburg
 - `east_end` - East End
 - `west_end` - West End
 - `chesterfield` - Chesterfield
@@ -179,19 +185,25 @@ Stores comprehensive patient information including personal details, address, me
 - `ashland` - Ashland
 - `hopewell` - Hopewell
 
+#### State Choices
+- `VA` - Virginia
+- `MD` - Maryland
+- `NC` - North Carolina
+- `SC` - South Carolina
+
 #### Employment Choices
-- `yes` - Yes
-- `no` - No
-- `disabled` - Disabled
+- `yes` - YES
+- `no` - NO
+- `disabled` - DISABLED
+- `retired` - RETIRED
 
 #### Yes/No Choices (shower, hungry)
-- `yes` - Yes
-- `no` - No
+- `yes` - YES
+- `no` - NO
 
 #### Homeless Choices
-- `yes` - Yes
-- `no` - No
-- `staying/someone` - Staying / Someone
+- `yes` - YES
+- `no` - NO
 
 ### Model Example
 
@@ -201,7 +213,7 @@ Stores comprehensive patient information including personal details, address, me
   "fname": "John Doe",
   "dob": "1990-05-15",
   "gender": "male",
-  "pronoun": "he/him",
+  "pronoun": "he_him",
   "phone": "5551234567",
   "emergency_contact": "Jane Doe - 5559876543",
   "ssn": "1234567890",
@@ -383,4 +395,4 @@ today_patients = Patient.objects.filter(
 ```
 
 ---
-*Last Updated: October 28, 2025*
+*Last Updated: October 30, 2025*

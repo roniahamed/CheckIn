@@ -130,8 +130,8 @@ Content-Type: multipart/form-data
 |-------|------|-------------|----------|
 | fname | string | Max 255 chars | Yes |
 | dob | date | YYYY-MM-DD, not future | Yes |
-| gender | string | 'male' \| 'female' \| 'other' | Yes |
-| pronoun | string | 'he/him' \| 'she/her' | Yes |
+| gender | string | 'male' \| 'female' \| 'non_binary' \| 'other' | Yes |
+| pronoun | string | 'he_him' \| 'she_her' \| 'they_them' \| 'other' | Yes |
 | phone | string | 10 digits | Yes |
 | emergency_contact | string | Max 255 chars | Yes |
 | ssn | string | 10 digits | Yes |
@@ -139,17 +139,17 @@ Content-Type: multipart/form-data
 | street2 | string | Max 255 chars | No |
 | last_known_address | string | Max 255 chars | Yes |
 | city | string | Max 100 chars | Yes |
-| state | string | Max 100 chars | Yes |
+| state | string | 'VA' \| 'MD' \| 'NC' \| 'SC' | Yes |
 | zip | string | 5 digits | Yes |
 | medicaid_no | string | 10 digits | No |
-| id_card | string | 'yes' \| 'no' \| 'lost/stolen' | Yes |
+| id_card | string | 'yes' \| 'no' \| 'lost' | Yes |
 | insurance | string | See [Insurance Choices](#insurance-choices) | Yes |
 | race | string | See [Race Choices](#race-choices) | Yes |
 | pref_service_area | string | See [Service Area Choices](#service-area-choices) | Yes |
-| employed | string | 'yes' \| 'no' \| 'disabled' | Yes |
+| employed | string | 'yes' \| 'no' \| 'disabled' \| 'retired' | Yes |
 | shower | string | 'yes' \| 'no' | Yes |
 | hungry | string | 'yes' \| 'no' | Yes |
-| homeless | string | 'yes' \| 'no' \| 'staying/someone' | Yes |
+| homeless | string | 'yes' \| 'no' | Yes |
 | image | file | JPEG/PNG, max 5MB | No |
 
 #### Response
@@ -413,18 +413,21 @@ Example: `01:30:00` (1 hour 30 minutes)
 - `anthem` - Anthem
 - `sentara` - Sentara
 - `united` - United
+- `dont_know` - I Don't Know
 
 ### Race Choices
 - `black_african_american` - Black/African American
 - `caucasian` - Caucasian
 - `hispanic_latino` - Hispanic/Latino
-- `american_indian_or_alaskan_native` - American Indian or Alaskan Native
+- `american_indian_alaskan_native` - American Indian or Alaskan Native
 - `biracial` - Biracial
 - `asian` - Asian
+- `middle_eastern` - Middle Eastern
 - `hawaiian_pacific_islander` - Hawaiian/Pacific Islander
 - `other` - Other
 
 ### Service Area Choices
+- `petersburg` - Petersburg
 - `east_end` - East End
 - `west_end` - West End
 - `chesterfield` - Chesterfield
@@ -547,4 +550,4 @@ API versioning is not currently implemented. Future versions may use URL version
 
 ---
 
-*API Specification v1.0 - Last Updated: October 28, 2025*
+*API Specification v1.0 - Last Updated: October 30, 2025*
