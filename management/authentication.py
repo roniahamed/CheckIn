@@ -10,7 +10,7 @@ class CustomJWTAuthentication(JWTAuthentication):
 
     def get_header(self, request):
 
-        header = request.headers.get('Roni-Authorization')
+        header = request.headers.get('RoniAuthorization')
         if header is None:
             print("Header is None")
             return None
