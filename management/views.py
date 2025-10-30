@@ -64,6 +64,7 @@ class FormPatientView(APIView):
                 {
                     'type': 'send.queue.update',
                     'event': 'PATIENT_ADDED',
+                    'id': queue_entry.id,
                     'patient': {
                         'id': patient.id,
                         'fname': patient.fname,
