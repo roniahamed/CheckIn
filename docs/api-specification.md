@@ -253,7 +253,7 @@ Manage patient consultations.
   "patient": {
     "id": "integer",
     "fname": "string",
-    "status": "in_consultation",
+    "status": "completed",
     "image": "string (URL) | null"
   }
 }
@@ -267,9 +267,10 @@ Manage patient consultations.
 ```
 
 **Side Effects**:
-1. Updates first waiting QueueEntry to 'in_consultation'
-2. Sets `called_at` timestamp
-3. Sends WebSocket event `PATIENT_CALLED`
+1. Updates first waiting QueueEntry to 'completed'
+2. Sets `called_at` and `check_out_time` timestamps
+3. Calculates and stores wait time
+4. Sends WebSocket event `PATIENT_COMPLETED`
 
 #### Complete Consultation
 
@@ -330,7 +331,7 @@ Get welcome message (for testing authentication).
 
 ### GET `/api/queue/`
 
-Get current queue with waiting and in-consultation patients.
+Get current queue of waiting patients.
 
 **Authentication**: None (currently)
 
@@ -346,7 +347,7 @@ Get current queue with waiting and in-consultation patients.
       "fname": "string",
       "image": "string (URL) | null"
     },
-    "status": "waiting | in_consultation",
+    "status": "waiting",
     "check_in_time": "datetime (ISO 8601)"
   }
 ]
@@ -369,11 +370,11 @@ All events follow this structure:
 ```json
 {
   "type": "send.queue.update",
-  "event": "PATIENT_ADDED | PATIENT_CALLED | PATIENT_COMPLETED",
+  "event": "PATIENT_ADDED | PATIENT_COMPLETED",
   "patient": {
     "id": "integer",
     "fname": "string",
-    "status": "waiting | in_consultation | completed",
+    "status": "waiting | completed",
     "image": "string (URL) | null"
   }
 }
@@ -384,7 +385,7 @@ All events follow this structure:
 | Event | Trigger | Patient Status |
 |-------|---------|----------------|
 | PATIENT_ADDED | POST /api/patients/ | waiting |
-| PATIENT_CALLED | POST /api/doctors/ (call_next) | in_consultation |
+
 | PATIENT_COMPLETED | POST /api/doctors/ (complete) | completed |
 
 ---

@@ -109,17 +109,10 @@ POST /api/patients/
 ### Doctor Management
 
 ```bash
-# Call next patient
+# Call next patient (completes immediately)
 POST /api/doctors/
 {
   "action": "call_next"
-}
-
-# Complete consultation
-POST /api/doctors/
-{
-  "action": "complete",
-  "patient_id": 1
 }
 ```
 
@@ -145,7 +138,7 @@ Create access tokens in the Django admin panel at `/admin/`.
 Connect to `ws://localhost:8000/ws/queue/` to receive real-time updates:
 
 - **PATIENT_ADDED** - New patient checked in
-- **PATIENT_CALLED** - Patient called to consultation  
+
 - **PATIENT_COMPLETED** - Consultation finished
 
 ## 🔧 Development

@@ -152,6 +152,6 @@ class QueueManagementView(APIView):
     # permission_classes = [IsQueueManager]
 
     def get(self, request):
-        queue_entries = QueueEntry.objects.select_related('patient').filter(status__in=[QueueEntry.Status.WAITING, QueueEntry.Status.IN_CONSULTATION])
+        queue_entries = QueueEntry.objects.select_related('patient').filter(status=QueueEntry.Status.WAITING)
         serializer = QueueEntrySerializer(queue_entries, many=True)
         return Response(serializer.data)

@@ -169,14 +169,14 @@ curl -X POST http://localhost:8000/api/doctors/ \
   "patient": {
     "id": 1,
     "fname": "John Doe",
-    "status": "in_consultation",
+    "status": "completed",
     "image": "/media/patient_images/john_doe_abc123.jpg"
   }
 }
 ```
 
 **Side Effects**:
-- Patient status updated to "in_consultation"
+- Patient status updated to "completed"
 - `called_at` timestamp recorded
 - WebSocket event sent to all connected clients
 
@@ -538,7 +538,7 @@ function DoctorDashboard() {
       const data = await response.json();
       setQueue(data);
       
-      const inConsultation = data.find(entry => entry.status === 'in_consultation');
+      const inConsultation = data.find(entry => entry.status === 'completed');
       setCurrentPatient(inConsultation);
     } catch (error) {
       console.error('Error fetching queue:', error);
@@ -550,7 +550,7 @@ function DoctorDashboard() {
       case 'PATIENT_ADDED':
         fetchQueue(); // Refresh queue
         break;
-      case 'PATIENT_CALLED':
+      case 'PATIENT_COMPLETED':
         setCurrentPatient(data.patient);
         break;
       case 'PATIENT_COMPLETED':
