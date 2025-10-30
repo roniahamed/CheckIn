@@ -225,18 +225,6 @@ Invalid choice:
 
 **Solution**: Ensure the action is either "call_next" or "complete", and include `patient_id` for the "complete" action.
 
-### 400 Bad Request - Patient Not in Consultation
-
-**Occurs when**: Trying to complete a patient who isn't currently in consultation
-
-**Response**:
-```json
-{
-  "error": "Patient is not currently in progress."
-}
-```
-
-**Solution**: Only complete patients who have been called to consultation.
 
 ---
 

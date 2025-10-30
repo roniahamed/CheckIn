@@ -282,7 +282,7 @@ Roni-Authorization: Bearer <access_token>
 
 **Endpoint**: `POST /api/doctors/`
 
-**Description**: Call the next patient in the waiting queue to consultation.
+**Description**: Call the next waiting patient and immediately complete their visit (no in-consultation state).
 
 **Authentication**: Required (Doctor role)
 
@@ -306,7 +306,7 @@ Content-Type: application/json
   "patient": {
     "id": 1,
     "fname": "John Doe",
-    "status": "in_consultation",
+    "status": "completed",
     "image": "/media/patient_images/john_doe_abc123.jpg"
   }
 }
@@ -329,9 +329,10 @@ Content-Type: application/json
 ```
 
 **Side Effects**:
-1. Updates queue entry status to `in_consultation`
-2. Sets `called_at` timestamp
-3. Sends WebSocket event `PATIENT_CALLED` to `queue_group`
+1. Updates queue entry status to `completed`
+2. Sets `called_at` and `check_out_time` timestamps
+3. Calculates and stores patient `wait_time`
+4. Sends WebSocket event `PATIENT_COMPLETED` to `queue_group`
 
 **cURL Example**:
 ```bash
@@ -343,77 +344,7 @@ curl -X POST http://localhost:8000/api/doctors/ \
   }'
 ```
 
-### 3.2 Complete Patient Consultation
 
-**Endpoint**: `POST /api/doctors/`
-
-**Description**: Mark a patient's consultation as complete.
-
-**Authentication**: Required (Doctor role)
-
-**Request Headers**:
-```
-Roni-Authorization: Bearer <access_token>
-Content-Type: application/json
-```
-
-**Request Body**:
-```json
-{
-  "action": "complete",
-  "patient_id": 1
-}
-```
-
-**Field Descriptions**:
-- `action` (string, required): Must be "complete"
-- `patient_id` (integer, required): ID of the patient to complete
-
-**Success Response** (200 OK):
-```json
-{
-  "message": "Action successful.",
-  "patient": {
-    "id": 1,
-    "fname": "John Doe",
-    "status": "completed",
-    "image": "/media/patient_images/john_doe_abc123.jpg"
-  }
-}
-```
-
-**Error Responses**:
-
-- **400 Bad Request** - Invalid action or patient:
-```json
-{
-  "error": "Invalid action or missing patient."
-}
-```
-
-- **400 Bad Request** - Patient not in consultation:
-```json
-{
-  "error": "Patient is not currently in progress."
-}
-```
-
-**Side Effects**:
-1. Updates queue entry status to `completed`
-2. Sets `check_out_time` timestamp
-3. Calculates and stores wait time for the patient
-4. Sends WebSocket event `PATIENT_COMPLETED` to `queue_group`
-
-**cURL Example**:
-```bash
-curl -X POST http://localhost:8000/api/doctors/ \
-  -H "Roni-Authorization: Bearer <access_token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "action": "complete",
-    "patient_id": 1
-  }'
-```
 
 ### 3.3 Get Doctor Access
 
@@ -443,7 +374,7 @@ Roni-Authorization: Bearer <access_token>
 
 **Endpoint**: `GET /api/queue/`
 
-**Description**: Retrieve the current patient queue with waiting and in-consultation patients.
+**Description**: Retrieve the current patient queue with waiting patients.
 
 **Authentication**: None (permissions currently commented out)
 
@@ -465,16 +396,7 @@ Content-Type: application/json
     "status": "waiting",
     "check_in_time": "2025-10-28T10:30:00Z"
   },
-  {
-    "id": 2,
-    "patient": {
-      "id": 2,
-      "fname": "Jane Smith",
-      "image": "/media/patient_images/jane_smith_def456.jpg"
-    },
-    "status": "in_consultation",
-    "check_in_time": "2025-10-28T10:25:00Z"
-  }
+
 ]
 ```
 
@@ -484,7 +406,7 @@ Content-Type: application/json
   - `id` (integer): Patient ID
   - `fname` (string): Patient full name
   - `image` (string|null): Patient photo URL
-- `status` (string): Current status (`waiting` or `in_consultation`)
+- `status` (string): Current status (`waiting`)
 - `check_in_time` (datetime): When patient checked in
 
 **cURL Example**:

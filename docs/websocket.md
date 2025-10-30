@@ -62,13 +62,12 @@ asyncio.run(listen_to_queue())
 
 ## Event Types
 
-The WebSocket sends three types of events:
+The WebSocket sends two types of events:
 
 | Event Type | Trigger | Description |
 |------------|---------|-------------|
 | `PATIENT_ADDED` | Patient check-in | New patient added to queue |
-| `PATIENT_CALLED` | Doctor calls next | Patient moved to consultation |
-| `PATIENT_COMPLETED` | Consultation ends | Patient consultation completed |
+| `PATIENT_COMPLETED` | Doctor calls next | Patient immediately completed (no consultation state) |
 
 ## Event Structures
 
@@ -116,52 +115,7 @@ function handlePatientAdded(data) {
 }
 ```
 
-### 2. PATIENT_CALLED
 
-**Triggered by**: `POST /api/doctors/` with action "call_next"
-
-**Event Structure**:
-```json
-{
-  "type": "send.queue.update",
-  "event": "PATIENT_CALLED",
-  "patient": {
-    "id": 1,
-    "fname": "John Doe",
-    "status": "in_consultation",
-    "image": "/media/patient_images/john_doe_abc123.jpg"
-  }
-}
-```
-
-**Field Descriptions**:
-- `type` (string): Internal message type (always "send.queue.update")
-- `event` (string): Event identifier ("PATIENT_CALLED")
-- `patient` (object): Patient information
-  - `id` (integer): Patient database ID
-  - `fname` (string): Patient full name
-  - `status` (string): Current status (always "in_consultation" for this event)
-  - `image` (string|null): Patient photo URL or null if no image
-
-**Example Handler**:
-```javascript
-function handlePatientCalled(data) {
-  const patient = data.patient;
-  
-  // Move patient from waiting to consultation section
-  const patientElement = document.getElementById(`patient-${patient.id}`);
-  document.getElementById('consultation-section').appendChild(patientElement);
-  
-  // Update status badge
-  updateStatusBadge(patient.id, 'in_consultation');
-  
-  // Show notification
-  showNotification(`${patient.fname} called to consultation`);
-  
-  // Update queue count
-  updateQueueCount();
-}
-```
 
 ### 3. PATIENT_COMPLETED
 
@@ -261,15 +215,7 @@ function QueueMonitor() {
         setQueue(prev => [...prev, data.patient]);
         break;
       
-      case 'PATIENT_CALLED':
-        setQueue(prev => 
-          prev.map(p => 
-            p.id === data.patient.id 
-              ? { ...p, status: 'in_consultation' }
-              : p
-          )
-        );
-        break;
+
       
       case 'PATIENT_COMPLETED':
         setQueue(prev => 
@@ -297,17 +243,7 @@ function QueueMonitor() {
           ))}
       </div>
       
-      <div className="consultation-section">
-        <h3>In Consultation</h3>
-        {queue
-          .filter(p => p.status === 'in_consultation')
-          .map(patient => (
-            <div key={patient.id} className="patient-card active">
-              {patient.image && <img src={patient.image} alt={patient.fname} />}
-              <span>{patient.fname}</span>
-            </div>
-          ))}
-      </div>
+
     </div>
   );
 }
@@ -356,9 +292,7 @@ class QueueManager {
       case 'PATIENT_ADDED':
         this.addPatient(data.patient);
         break;
-      case 'PATIENT_CALLED':
-        this.updatePatientStatus(data.patient.id, 'in_consultation');
-        break;
+
       case 'PATIENT_COMPLETED':
         this.removePatient(data.patient.id);
         break;

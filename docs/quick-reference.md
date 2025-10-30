@@ -89,14 +89,7 @@ Roni-Authorization: Bearer <access_token>
 }
 ```
 
-### Complete Consultation
 
-```json
-{
-  "action": "complete",
-  "patient_id": 1
-}
-```
 
 ---
 
@@ -113,8 +106,7 @@ ws://localhost:8000/ws/queue/
 | Event | Trigger | Status |
 |-------|---------|--------|
 | `PATIENT_ADDED` | Patient check-in | `waiting` |
-| `PATIENT_CALLED` | Doctor calls next | `in_consultation` |
-| `PATIENT_COMPLETED` | Consultation done | `completed` |
+| `PATIENT_COMPLETED` | Doctor calls next | `completed` |
 
 ### Event Structure
 
@@ -261,15 +253,11 @@ daphne -b 0.0.0.0 -p 8000 CheckIn.asgi:application
    ↓
 4. Email Notification Sent
    ↓
-5. Doctor Calls Next (status: in_consultation)
+5. Doctor Calls Next (status: completed)
    ↓
-6. WebSocket Event (PATIENT_CALLED)
+6. WebSocket Event (PATIENT_COMPLETED)
    ↓
-7. Doctor Completes (status: completed)
-   ↓
-8. WebSocket Event (PATIENT_COMPLETED)
-   ↓
-9. Wait Time Calculated
+7. Wait Time Calculated
 ```
 
 ---

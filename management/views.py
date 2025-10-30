@@ -52,14 +52,12 @@ class FormPatientView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = PatientSerializer(data=request.data)
         if serializer.is_valid():
-            # Use select_related for related objects if PatientSerializer creates related objects
+            # Save patient and create queue entry
             patient = serializer.save()
-
-            # No related objects to select here, but if you query for patient later, use select_related
             QueueEntry.objects.create(patient=patient)
 
+            # Notify via WebSocket
             channel_layer = get_channel_layer()
-
             async_to_sync(channel_layer.group_send)(
                 'queue_group',
                 {
@@ -73,13 +71,17 @@ class FormPatientView(APIView):
                     }
                 }
             )
+
+            # Send email asynchronously
             send_patient_checkin_email.delay(patient.id)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def get(self, request):
         # Logic for form patient management
         return Response({'message': f'Welcome Form User (Token: {request.user.token})! You can access the patient form.'})
+
 
 # View for doctor patient management
 class DoctorPatientView(APIView):
@@ -87,53 +89,45 @@ class DoctorPatientView(APIView):
 
     def post(self, request, *args, **kwargs):
         action = request.data.get('action')
-        patient_id = request.data.get('patient_id')
 
         if action == 'call_next':
             try:
                 with transaction.atomic():
-                    entry = QueueEntry.objects.select_for_update().select_related('patient').filter(status='waiting').first()
+                    entry = (
+                        QueueEntry.objects
+                        .select_for_update()
+                        .select_related('patient')
+                        .filter(status=QueueEntry.Status.WAITING)
+                        .first()
+                    )
                     if not entry:
                         return Response({'error': 'No patients in the waiting.'}, status=status.HTTP_404_NOT_FOUND)
 
-                    entry.status = 'in_consultation'
-                    entry.called_at = timezone.now()
-                    entry.save()
+                    # Complete the queue entry immediately upon call_next
+                    now_ts = timezone.now()
+                    entry.status = QueueEntry.Status.COMPLETED
+                    entry.called_at = now_ts
+                    entry.check_out_time = now_ts
+                    entry.save(update_fields=['status', 'called_at', 'check_out_time'])
+
+                    # Compute and persist waiting time on Patient (called_at - check_in_time)
+                    if entry.check_in_time and entry.called_at:
+                        wait_delta = entry.called_at - entry.check_in_time
+                        entry.patient.wait_time = wait_delta
+                        entry.patient.save(update_fields=['wait_time'])
 
                     patient_data = {
                         'id': entry.patient.id,
                         'fname': entry.patient.fname,
-                        'status': 'in_consultation',
+                        'status': QueueEntry.Status.COMPLETED,
                         'image': entry.patient.image.url if entry.patient.image else None,
                     }
-                    event_type = 'PATIENT_CALLED'
-            except Exception as e:
+                    event_type = 'PATIENT_COMPLETED'
+            except Exception:
                 return Response({'error': "Could not process the request. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        elif action == 'complete':
-            try:
-                entry = QueueEntry.objects.select_related('patient').get(patient_id=patient_id, status=QueueEntry.Status.IN_CONSULTATION)
-            except QueueEntry.DoesNotExist:
-                return Response({'error': 'Patient is not currently in progress.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            entry.status = QueueEntry.Status.COMPLETED
-            entry.check_out_time = timezone.now()
-            entry.save()
-
-            patient = entry.patient
-            wait_time = entry.check_out_time - entry.check_in_time
-            patient.wait_time = wait_time
-            patient.save()
-
-            patient_data = {
-                'id': patient.id,
-                'fname': patient.fname,
-                'status': 'completed',
-                'image': patient.image.url if patient.image else None,
-            }
-            event_type = 'PATIENT_COMPLETED'
         else:
             return Response({'error': 'Invalid action or missing patient.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             'queue_group',

@@ -262,7 +262,6 @@ Represents a patient's position and status in the consultation queue.
 | Value | Display Name | Description |
 |-------|--------------|-------------|
 | `waiting` | Waiting | Patient in waiting queue |
-| `in_consultation` | In Consultation | Patient currently with doctor |
 | `completed` | Completed | Consultation finished |
 
 ### Relationships
@@ -300,10 +299,6 @@ Queue entries are ordered by `check_in_time` (ascending) - first in, first out.
   WAITING
       ↓
 [Doctor Calls Next]
-      ↓
-IN_CONSULTATION
-      ↓
-[Doctor Completes]
       ↓
   COMPLETED
 ```
@@ -371,12 +366,7 @@ next_patient = QueueEntry.objects.filter(
 ).select_related('patient').first()
 ```
 
-#### Get patient in consultation
-```python
-in_consultation = QueueEntry.objects.filter(
-    status=QueueEntry.Status.IN_CONSULTATION
-).select_related('patient')
-```
+
 
 #### Get active access tokens
 ```python
@@ -395,4 +385,4 @@ today_patients = Patient.objects.filter(
 ```
 
 ---
-*Last Updated: October 30, 2025*
+*Last Updated: October 31, 2025*
