@@ -54,7 +54,8 @@ class FormPatientView(APIView):
         if serializer.is_valid():
             # Save patient and create queue entry
             patient = serializer.save()
-            QueueEntry.objects.create(patient=patient)
+            queue_entry = QueueEntry.objects.create(patient=patient)
+
 
             # Notify via WebSocket
             channel_layer = get_channel_layer()
@@ -68,7 +69,9 @@ class FormPatientView(APIView):
                         'fname': patient.fname,
                         'status': 'waiting',
                         'image': patient.image.url if patient.image else None,
-                    }
+                    },
+                    # Ensure datetimes are serialized as strings for websocket payloads
+                    'check_in_time': queue_entry.check_in_time.isoformat() if queue_entry.check_in_time else None,
                 }
             )
 
