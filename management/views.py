@@ -120,6 +120,7 @@ class DoctorPatientView(APIView):
                         entry.patient.wait_time = wait_delta
                         entry.patient.save(update_fields=['wait_time'])
 
+
                     patient_data = {
                         'id': entry.patient.id,
                         'fname': entry.patient.fname,
@@ -138,6 +139,7 @@ class DoctorPatientView(APIView):
             {
                 'type': 'send.queue.update',
                 'event': event_type,
+                'id': entry.id,
                 'patient': patient_data
             }
         )
