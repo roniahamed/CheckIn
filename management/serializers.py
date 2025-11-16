@@ -113,7 +113,7 @@ class PatientSerializer(serializers.ModelSerializer):
         """
         if value:
             valid_mime_types = ['image/jpeg', 'image/png']
-            file_mime_type = value.file.content_type
+            file_mime_type = value.content_type
             if file_mime_type not in valid_mime_types:
                 raise serializers.ValidationError("Unsupported image type. Only JPEG and PNG are allowed.")
             if value.size > 5 * 1024 * 1024:  # 5 MB limit
